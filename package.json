@@ -1,0 +1,22 @@
+{
+  "name": "simulation-vue",
+  "version": "1.0.0",
+  "description": "{**When you're done, you can delete the content in this README and update the file with details for others getting started with your repository**}",
+  "main": "index.js",
+  "scripts": {
+    "dev:reactivity": "node scripts/dev.js reactivity",
+    "dev:runtime-dom": "node scripts/dev.js runtime-dom",
+    "dev:runtime-core": "node scripts/dev.js runtime-core"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/QQXQQ/SimulationVue.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "esbuild": "^0.14.48",
+    "minimist": "^1.2.6",
+    "typescript": "^4.7.4"
+  }
+}

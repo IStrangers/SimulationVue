@@ -1,0 +1,14 @@
+{
+  "name": "@sv/runtime-dom",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "buildOptions": {
+    "name": "RuntimeDOM",
+    "formats": [
+      "iife",
+      "cjs",
+      "esm"
+    ]
+  }
+}
