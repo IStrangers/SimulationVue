@@ -1,4 +1,4 @@
-import { isFunction } from "../../util"
+import { isFunction } from "../../shared/src/utils"
 import { ReactiveEffect, trackEffects, triggerEffects } from "./effect"
 
 const readonlySet = () => console.warn("not implemented setter")

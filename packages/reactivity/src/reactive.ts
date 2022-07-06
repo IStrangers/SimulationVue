@@ -1,4 +1,4 @@
-import {isObject} from "../../util"
+import {isObject} from "../../shared/src/utils"
 import { track, trigger } from "./effect"
 
 enum ReactiveTagAttr {

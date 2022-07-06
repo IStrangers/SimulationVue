@@ -1,4 +1,4 @@
-import { isArray, isObject } from "../../util"
+import { isArray, isObject } from "../../shared/src/utils"
 import { ReactiveEffect, trackEffects, triggerEffects } from "./effect"
 import { isReactive, reactive, ReactiveTagAttr } from "./reactive"
 

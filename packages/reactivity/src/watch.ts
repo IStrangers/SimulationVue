@@ -1,4 +1,4 @@
-import { isFunction, isObject } from "../../util"
+import { isFunction, isObject } from "../../shared/src/utils"
 import { ReactiveEffect } from "./effect"
 import { isReactive } from "./reactive"
 

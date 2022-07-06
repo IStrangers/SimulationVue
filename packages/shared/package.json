@@ -1,0 +1,14 @@
+{
+  "name": "@sv/shared",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "buildOptions": {
+    "name": "Shared",
+    "formats": [
+      "iife",
+      "cjs",
+      "esm"
+    ]
+  }
+}
