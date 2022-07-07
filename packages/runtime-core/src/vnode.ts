@@ -4,11 +4,21 @@ enum VnodeTagAttr {
     IS_VNODE = "__isVnode__",
 }
 
+interface Vnode {
+    el: null | Node
+    key: string
+    type: any
+    props: any
+    children: Array<Vnode>
+    shapeFlag: ShapeFlags
+    __isVnode__ : boolean
+}
+
 function isVnode(value : any) {
     return value && value[VnodeTagAttr.IS_VNODE]
 }
 
-function createVnode(type : any,props : any,children : any) {
+function createVnode(type : any,props : any,children : any) : Vnode {
 
     let shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 0
 
@@ -38,6 +48,7 @@ function createVnode(type : any,props : any,children : any) {
 }
 
 export {
+    Vnode,
     isVnode,
     createVnode,
 }

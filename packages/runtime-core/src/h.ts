@@ -1,7 +1,7 @@
 import { isArray, isObject } from "../../shared"
-import { createVnode, isVnode } from "./vnode"
+import { createVnode, isVnode, Vnode } from "./vnode"
 
-function h(type : any,propsOrChildren : any,children : any) {
+function h(type : any,propsOrChildren : any,children : any) : Vnode {
   const len = arguments.length
   if(len === 2) {
     if(isArray(propsOrChildren) || !isObject(propsOrChildren)) {
