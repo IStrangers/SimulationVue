@@ -22,32 +22,75 @@ function createRenderer(renderOptions : any) {
 
   function mountChildren(children : Array<Vnode>,container : Node) {
     for(let i = 0; i < children.length; i++) {
-      mountELement(children[i],container)
+      mountELement(children[i],container,null)
     }
   }
 
 
 
-  function mountELement(vnode : Vnode,container : Node) {
+  function mountELement(vnode : Vnode,container : Node,anchor : Node | null) {
     const {type,props,shapeFlag,children} = vnode
-    let el
-    if(type) {
-      el = hostCreateElement(type)
-      if(props) {
-        hostPatchProps(el,null,props)
-      }
-      if(shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-        mountChildren(children,el)
-      }
-    } else if(shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-      el = hostCreateText(children)
+    let el = hostCreateElement(type)
+    if(props) {
+      hostPatchProps(el,{},props)
+    }
+    if(shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      hostInsert(hostCreateText(children),type ? el : container)
+    }else if(shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+      mountChildren(children,el)
     }
 
-    hostInsert(el,container)
-    vnode.el = container
-    container[ContainerTagAttr.VNODE] = vnode
+    hostInsert(el,container,anchor)
+    vnode.el = el
+    el[ContainerTagAttr.VNODE] = vnode
   }
   
+
+
+  function patchKeyChildren(oldChildren : Array<Vnode>,newChildren : Array<Vnode>,el : Node) {
+    let i = 0
+    let oldLength = oldChildren.length - 1
+    let newLength = newChildren.length - 1
+
+    while(i <= oldLength && i <= newLength) {
+      const oldVnode = oldChildren[i]
+      const newVnode = newChildren[i]
+      if(isSameVnode(oldVnode,newVnode)) {
+        patch(oldVnode,newVnode,el,null)
+      } else {
+        break
+      }
+      i++
+    }
+
+    while(i <= oldLength && i <= newLength) {
+      const oldVnode = oldChildren[oldLength]
+      const newVnode = newChildren[newLength]
+      if(isSameVnode(oldVnode,newVnode)) {
+        patch(oldVnode,newVnode,el,null)
+      } else {
+        break
+      }
+      oldLength--
+      newLength--
+    }
+
+    if(i > oldLength) {
+      while(i <= newLength) {
+        const nextNewIndex = newLength + 1
+        const anchor = nextNewIndex < newChildren.length ? newChildren[nextNewIndex].el : null
+        patch(null,newChildren[i],el,anchor)
+        i++
+      }
+    } else if(i > newLength) {
+      while(i <= oldLength) {
+        unmount(oldChildren[i])
+        i++
+      }
+    }
+
+  }
+
 
 
   function patchChildren(oldVnode : Vnode,newVnode : Vnode,el : Node) {
@@ -71,7 +114,7 @@ function createRenderer(renderOptions : any) {
       if(oldShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         //如果新的是数组
         if(newShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-
+          patchKeyChildren(oldChildren,newChildren,el)
         } else {
           unmountChildren(oldChildren)
         }
@@ -98,13 +141,12 @@ function createRenderer(renderOptions : any) {
     const oldProps = oldVnode.props || {}
     const newProps = newVnode.props || {}
     hostPatchProps(el,oldProps,newProps)
-
     patchChildren(oldVnode,newVnode,el)
   }
 
 
 
-  function patch(__vnode__ : Vnode | null,vnode : Vnode,container : Node) {   
+  function patch(__vnode__ : Vnode | null,vnode : Vnode,container : Node,anchor : Node | null) {   
     if(__vnode__ === vnode) {
       return
     }
@@ -117,7 +159,7 @@ function createRenderer(renderOptions : any) {
     if(__vnode__) {
       patchElement(__vnode__,vnode)
     } else {
-      mountELement(vnode,container)
+      mountELement(vnode,container,anchor)
     }
   
   }
@@ -141,7 +183,8 @@ function createRenderer(renderOptions : any) {
   function render(vnode : Vnode | null,container : Node) {
     const __vnode__ = container[ContainerTagAttr.VNODE] || null
     if(vnode) {
-      patch(__vnode__,vnode,container)
+      patch(__vnode__,vnode,container,null)
+      container[ContainerTagAttr.VNODE] = vnode
     } else if(__vnode__){
       unmount(__vnode__)
     }
