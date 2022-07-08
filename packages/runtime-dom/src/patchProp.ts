@@ -63,6 +63,18 @@ function patchProp(el : Element,key : string,prevValue : any,nextValue : any) {
   }
 }
 
+function patchProps(el : Element,prevValue : any,nextValue : any) {
+  for(let key in prevValue) {
+    if(!nextValue[key]) {
+      patchProp(el,key,prevValue[key],null)
+    }
+  }
+  for(let key in nextValue) {
+    patchProp(el,key,prevValue[key],nextValue[key])
+  }
+}
+
 export {
-  patchProp
+  patchProp,
+  patchProps
 }

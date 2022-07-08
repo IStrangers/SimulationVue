@@ -14,8 +14,13 @@ interface Vnode {
     __isVnode__ : boolean
 }
 
-function isVnode(value : any) {
+function isVnode(value : any) : boolean {
     return value && value[VnodeTagAttr.IS_VNODE]
+}
+
+function isSameVnode(node1 : Vnode,node2 : Vnode) : boolean {
+    return (node1.type === node2.type) && 
+           (node1.key === node2.key)
 }
 
 function createVnode(type : any,props : any,children : any) : Vnode {
@@ -50,5 +55,6 @@ function createVnode(type : any,props : any,children : any) : Vnode {
 export {
     Vnode,
     isVnode,
+    isSameVnode,
     createVnode,
 }

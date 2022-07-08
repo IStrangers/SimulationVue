@@ -1,9 +1,9 @@
 import { createRenderer } from "../runtime-core"
 import { Vnode } from "../runtime-core/src/vnode"
 import { nodeOps } from "./src/nodeOps"
-import { patchProp } from "./src/patchProp"
+import { patchProp,patchProps } from "./src/patchProp"
 
-const renderOptions = Object.assign(nodeOps,{patchProp})
+const renderOptions = Object.assign(nodeOps,{patchProp,patchProps})
 
 function render(vnode : Vnode,container : Node) {
   createRenderer(renderOptions).render(vnode,container)

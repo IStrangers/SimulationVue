@@ -8,11 +8,12 @@ interface RenderApi {
     hostCreateElement: Function
     hostCreateText: Function
     hostPatchProp: Function
+    hostPatchProps: Function
 }
 
 function createRenderApi(renderOptions : any) : RenderApi {
     const renderApi = {
-        hostInsert : renderOptions["insert"],
+        hostInsert: renderOptions["insert"],
         hostRemove: renderOptions["remove"],
         hostSetElementText: renderOptions["setElementText"],
         hostSetText: renderOptions["setText"],
@@ -22,6 +23,11 @@ function createRenderApi(renderOptions : any) : RenderApi {
         hostCreateText: renderOptions["createText"],
         hostCreateComment: renderOptions["createComment"],
         hostPatchProp: renderOptions["patchProp"],
+        hostPatchProps: renderOptions["patchProps"],
     }
     return renderApi
+}
+
+export {
+    createRenderApi
 }

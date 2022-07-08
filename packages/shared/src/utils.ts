@@ -3,7 +3,7 @@ function isObject(value : any) : boolean {
 }
 
 function isNumber(value : any) : boolean {
-  return value != NaN && typeof value === 'number'
+  return !isNaN(value) && typeof value === 'number'
 }
 
 function isString(value : any) : boolean {
