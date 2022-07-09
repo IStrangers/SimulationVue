@@ -93,12 +93,12 @@ function createRenderer(renderOptions : any) {
     //乱序对比
     const keyTonewIndexMap = new Map()
     for(let j = i; j <= newLength; j++) {
-      keyTonewIndexMap.set(newChildren[j].key,i)
+      keyTonewIndexMap.set(newChildren[j].key,j)
     }
   
     const toBePatched = newLength - i
     //是否比较过
-    const hasItBeenComparedMap = new Array(toBePatched).fill(0)
+    const hasItBeenComparedMap = new Array(toBePatched > 0 ? toBePatched : 1).fill(0)
     //老的元素在新的里面有没有，如果有就要比较差异，没有就要添加，老的有新的没有就删除
     for(let j = i; j <= oldLength; j++) {
       const oldVnode = oldChildren[j]
