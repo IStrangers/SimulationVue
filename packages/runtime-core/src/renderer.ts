@@ -3,6 +3,7 @@ import { createRenderApi } from "./renderApi"
 import { Fragment, isSameVnode, Text, Vnode } from "./vnode"
 
 enum ContainerTagAttr {
+  IS_ROOT = "__isRoot__",
   VNODE = "__vnode__"
 }
 
@@ -203,7 +204,14 @@ function createRenderer(renderOptions : any) {
     }
 
     if(__vnode__ && !isSameVnode(__vnode__,vnode)) {
-      unmount(__vnode__)
+      const el = __vnode__.el
+      if(el) {
+        if(el[ContainerTagAttr.IS_ROOT]) {
+          hostSetElementText(el,"")
+        } else {
+          unmount(__vnode__)
+        }
+      }
       __vnode__ = null
     }
   
@@ -236,6 +244,7 @@ function createRenderer(renderOptions : any) {
     if(vnode) {
       patch(__vnode__,vnode,container,null)
       container[ContainerTagAttr.VNODE] = vnode
+      container[ContainerTagAttr.IS_ROOT] = true
     } else if(__vnode__){
       unmount(__vnode__)
     }
