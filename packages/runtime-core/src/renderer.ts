@@ -30,17 +30,18 @@ function createRenderer(renderOptions : any) {
 
   function mountELement(vnode : Vnode,container : Node,anchor : Node | null) {
     const {type,props,shapeFlag,children} = vnode
-    let el = hostCreateElement(type)
+    let el = type ? hostCreateElement(type) : container
     if(props) {
       hostPatchProps(el,{},props)
     }
     if(shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-      hostInsert(hostCreateText(children),type ? el : container)
+      hostInsert(hostCreateText(children),el)
     }else if(shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       mountChildren(children,el)
     }
-
-    hostInsert(el,container,anchor)
+    if(type) {
+      hostInsert(el,container,anchor)
+    }
     vnode.el = el
     el[ContainerTagAttr.VNODE] = vnode
   }
@@ -89,6 +90,42 @@ function createRenderer(renderOptions : any) {
       }
     }
 
+    //乱序对比
+    const keyTonewIndexMap = new Map()
+    for(let j = i; j <= newLength; j++) {
+      keyTonewIndexMap.set(newChildren[j].key,i)
+    }
+  
+    const toBePatched = newLength - i
+    //是否比较过
+    const hasItBeenComparedMap = new Array(toBePatched).fill(0)
+    //老的元素在新的里面有没有，如果有就要比较差异，没有就要添加，老的有新的没有就删除
+    for(let j = i; j <= oldLength; j++) {
+      const oldVnode = oldChildren[j]
+      const newIndex = keyTonewIndexMap.get(oldVnode.key)
+      if(newIndex) {
+        patch(oldVnode,newChildren[newIndex],el,null)
+        //标记
+        hasItBeenComparedMap[newIndex - i] = j + 1
+      } else {
+        unmount(oldVnode)
+      }
+    }
+
+    //需要移动的元素
+    for(let j = toBePatched; j >= 0; j--) {
+      const index = j + i
+      const current = newChildren[index]
+      const anchor = (index + 1) < newChildren.length ? newChildren[index + 1].el : null
+      
+      //是否是创建的元素
+      if(hasItBeenComparedMap[j] === 0) {
+        patch(null,current,el,anchor)
+      } else {
+        //移动位置
+        hostInsert(current.el,el,anchor)
+      }
+    }
   }
 
 
