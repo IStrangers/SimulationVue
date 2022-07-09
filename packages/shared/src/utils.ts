@@ -36,6 +36,52 @@ function removeExtraSpaces(value : string) : string {
   return value.replace(/[\s]+/g," ").trim()
 }
 
+function getLongestIncreasingSequence(arr : Array<number>) : Array<number> {
+  const len = arr.length
+  const result = [0]
+  const traceBack = new Array(len)
+  let startIndex
+  let endIndex
+  let middleIndex
+  let resultLastIndex;
+  for(let i = 0; i < len; i++) {
+    let item = arr[i]
+    if(item === 0) {
+      continue
+    }
+    resultLastIndex = result[result.length - 1]
+    if(arr[resultLastIndex] < item) {
+      result.push(i)
+      traceBack[i] = resultLastIndex
+      continue
+    }
+
+    startIndex = 0
+    endIndex = result.length - 1
+    while(startIndex < endIndex) {
+      middleIndex = ((startIndex + endIndex) / 2) | 0
+      if(arr[result[middleIndex]] < item) {
+        startIndex = middleIndex  + 1
+      } else {
+        endIndex = middleIndex
+      }
+    }
+
+    if(arr[result[endIndex]] > item) {
+      result[endIndex] = i
+      traceBack[i] = result[endIndex - 1]
+    }
+  }
+
+  let i = result.length
+  let last = result[i - 1]
+  while(i-- > 0) {
+    result[i] = last
+    last = traceBack[last]
+  }
+  return result
+}
+
 export {
   isObject,
   isNumber,
@@ -45,4 +91,5 @@ export {
   isFunction,
   isUppercaseStart,
   removeExtraSpaces,
+  getLongestIncreasingSequence,
 }

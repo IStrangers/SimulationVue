@@ -4,6 +4,9 @@ enum VnodeTagAttr {
     IS_VNODE = "__isVnode__",
 }
 
+const Text = Symbol("Text")
+const Fragment = Symbol("Fragment")
+
 interface Vnode {
     el: null | Node
     key: string
@@ -54,6 +57,8 @@ function createVnode(type : any,props : any,children : any) : Vnode {
 
 export {
     Vnode,
+    Text,
+    Fragment,
     isVnode,
     isSameVnode,
     createVnode,

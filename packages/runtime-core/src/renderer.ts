@@ -1,7 +1,6 @@
-import { patchProp } from "../../runtime-dom/src/patchProp"
-import { ShapeFlags } from "../../shared"
+import { getLongestIncreasingSequence, ShapeFlags } from "../../shared"
 import { createRenderApi } from "./renderApi"
-import { isSameVnode, Vnode } from "./vnode"
+import { Fragment, isSameVnode, Text, Vnode } from "./vnode"
 
 enum ContainerTagAttr {
   VNODE = "__vnode__"
@@ -28,9 +27,16 @@ function createRenderer(renderOptions : any) {
 
 
 
+  function isNotParentNodeType(type : any) : boolean {
+    return type === Text || type === Fragment
+  }
+
+
+
   function mountELement(vnode : Vnode,container : Node,anchor : Node | null) {
     const {type,props,shapeFlag,children} = vnode
-    let el = type ? hostCreateElement(type) : container
+    const isNotParentNode = isNotParentNodeType(type)
+    let el = isNotParentNode ? container : hostCreateElement(type)
     if(props) {
       hostPatchProps(el,{},props)
     }
@@ -39,7 +45,7 @@ function createRenderer(renderOptions : any) {
     }else if(shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       mountChildren(children,el)
     }
-    if(type) {
+    if(isNotParentNode === false) {
       hostInsert(el,container,anchor)
     }
     vnode.el = el
@@ -99,6 +105,7 @@ function createRenderer(renderOptions : any) {
     const toBePatched = newLength - i
     //是否比较过
     const hasItBeenComparedMap = new Array(toBePatched > 0 ? toBePatched : 1).fill(0)
+    
     //老的元素在新的里面有没有，如果有就要比较差异，没有就要添加，老的有新的没有就删除
     for(let j = i; j <= oldLength; j++) {
       const oldVnode = oldChildren[j]
@@ -112,6 +119,9 @@ function createRenderer(renderOptions : any) {
       }
     }
 
+    //获取最长递增子序列
+    const increment = getLongestIncreasingSequence(hasItBeenComparedMap)
+    let incrementIndex = increment.length - 1;
     //需要移动的元素
     for(let j = toBePatched; j >= 0; j--) {
       const index = j + i
@@ -122,8 +132,12 @@ function createRenderer(renderOptions : any) {
       if(hasItBeenComparedMap[j] === 0) {
         patch(null,current,el,anchor)
       } else {
-        //移动位置
-        hostInsert(current.el,el,anchor)
+        if(j != increment[incrementIndex]) {
+          //移动位置
+          hostInsert(current.el,el,anchor)
+        } else {
+          incrementIndex--
+        }
       }
     }
   }

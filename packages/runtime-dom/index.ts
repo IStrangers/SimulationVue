@@ -1,5 +1,5 @@
 import { createRenderer } from "../runtime-core"
-import { Vnode } from "../runtime-core/src/vnode"
+import { Text,Fragment,Vnode } from "../runtime-core/src/vnode"
 import { nodeOps } from "./src/nodeOps"
 import { patchProp,patchProps } from "./src/patchProp"
 
@@ -12,5 +12,7 @@ function render(vnode : Vnode,container : Node) {
 export * from "../runtime-core"
 
 export {
+  Text,
+  Fragment,
   render
 }
