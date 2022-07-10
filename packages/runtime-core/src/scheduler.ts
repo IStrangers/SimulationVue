@@ -13,13 +13,13 @@ function queueJob(job : Function) {
     isFlushing = true
     resolvPromise.then(() => {
         let copyQueue = queue.slice(0)
+        queue.length = 0
+        isFlushing = false
         for (let index = 0; index < copyQueue.length; index++) {
             const job = copyQueue[index];
             job()
         }
-        queue.length = 0
         copyQueue.length = 0
-        isFlushing = false
     })
 }
 

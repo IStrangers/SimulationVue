@@ -2,6 +2,7 @@ import { isArray, isObject, isString, ShapeFlags } from "../../shared"
 
 enum VnodeTagAttr {
     IS_VNODE = "__isVnode__",
+    COMPONENT = "__component__",
 }
 
 const Text = Symbol("Text")
@@ -58,6 +59,7 @@ function createVnode(type : any,props : any,children : any) : Vnode {
 
 export {
     Vnode,
+    VnodeTagAttr,
     Text,
     Fragment,
     isVnode,

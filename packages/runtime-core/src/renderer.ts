@@ -1,8 +1,9 @@
-import { reactive, ReactiveEffect } from "../../reactivity"
+import { ReactiveEffect } from "../../reactivity"
 import { getLongestIncreasingSequence, ShapeFlags } from "../../shared"
+import { createComponentInstance } from "./component"
 import { createRenderApi } from "./renderApi"
 import { queueJob } from "./scheduler"
-import { Fragment, isSameVnode, Text, Vnode } from "./vnode"
+import { Fragment, isSameVnode, Text, Vnode, VnodeTagAttr } from "./vnode"
 
 enum ContainerTagAttr {
   IS_ROOT = "__isRoot__",
@@ -211,34 +212,26 @@ function createRenderer(renderOptions : any) {
 
 
   function mountComponent(vnode : Vnode,container : Node,anchor : Node | null) {
-    const {
-      data = () => {},
-      render = () => {},
-    } = vnode.type
-    const state = reactive(data())
-    const instance = {
-      state,
-      vnode,
-      subTree: null,
-      isMounted: false,
-      update: () => {},
-    }
+    const component = createComponentInstance(vnode)
+    const {render,proxy} = component
     const componentUpdate = () => {
-      if(instance.isMounted) {
-        const subTree = render.call(state)
-        patch(instance.subTree,subTree,container,anchor)
-        instance.subTree = subTree
+      if(component.isMounted) {
+        const subTree = render.call(proxy)
+        patch(component.subTree,subTree,container,anchor)
+        component.subTree = subTree
       } else {
-        const subTree = render.call(state)
+        const subTree = render.call(proxy)
         patch(null,subTree,container,anchor)
-        instance.subTree = subTree
-        instance.isMounted = true
+        component.subTree = subTree
+        component.isMounted = true
       }
     }
     const reactiveEffect = new ReactiveEffect(componentUpdate,() => queueJob(update))
-    const update = instance.update = reactiveEffect.run.bind(reactiveEffect)
+    const update = component["update"] = reactiveEffect.run.bind(reactiveEffect)
     update()
+    vnode[VnodeTagAttr.COMPONENT] = component
   }
+
 
 
   function patchComponent(oldVnode : Vnode,newVnode : Vnode,anchor : Node | null) {

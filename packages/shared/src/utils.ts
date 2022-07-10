@@ -32,6 +32,10 @@ function isUppercaseStart(value : string) : boolean {
   return false
 }
 
+function hasOwnProperty(value : any,key : any) : boolean {
+  return Object.prototype.hasOwnProperty.call(value,key)
+} 
+
 function removeExtraSpaces(value : string) : string {
   return value.replace(/[\s]+/g," ").trim()
 }
@@ -89,6 +93,7 @@ export {
   isBoolean,
   isArray,
   isFunction,
+  hasOwnProperty,
   isUppercaseStart,
   removeExtraSpaces,
   getLongestIncreasingSequence,
