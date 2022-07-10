@@ -1,4 +1,4 @@
-import { isArray, isString, ShapeFlags } from "../../shared"
+import { isArray, isObject, isString, ShapeFlags } from "../../shared"
 
 enum VnodeTagAttr {
     IS_VNODE = "__isVnode__",
@@ -28,7 +28,8 @@ function isSameVnode(node1 : Vnode,node2 : Vnode) : boolean {
 
 function createVnode(type : any,props : any,children : any) : Vnode {
 
-    let shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 0
+    let shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 
+                    isObject(type) ? ShapeFlags.STATEFUL_COMPONENT : 0
 
     const __isVnode__ = true
     const vnode = {

@@ -1,5 +1,7 @@
+import { reactive, ReactiveEffect } from "../../reactivity"
 import { getLongestIncreasingSequence, ShapeFlags } from "../../shared"
 import { createRenderApi } from "./renderApi"
+import { queueJob } from "./scheduler"
 import { Fragment, isSameVnode, Text, Vnode } from "./vnode"
 
 enum ContainerTagAttr {
@@ -198,6 +200,62 @@ function createRenderer(renderOptions : any) {
 
 
 
+  function processElement(__vnode__ : Vnode | null,vnode : Vnode,container : Node,anchor : Node | null) {
+    if(__vnode__) {
+      patchElement(__vnode__,vnode)
+    } else {
+      mountELement(vnode,container,anchor)
+    }
+  }
+
+
+
+  function mountComponent(vnode : Vnode,container : Node,anchor : Node | null) {
+    const {
+      data = () => {},
+      render = () => {},
+    } = vnode.type
+    const state = reactive(data())
+    const instance = {
+      state,
+      vnode,
+      subTree: null,
+      isMounted: false,
+      update: () => {},
+    }
+    const componentUpdate = () => {
+      if(instance.isMounted) {
+        const subTree = render.call(state)
+        patch(instance.subTree,subTree,container,anchor)
+        instance.subTree = subTree
+      } else {
+        const subTree = render.call(state)
+        patch(null,subTree,container,anchor)
+        instance.subTree = subTree
+        instance.isMounted = true
+      }
+    }
+    const reactiveEffect = new ReactiveEffect(componentUpdate,() => queueJob(update))
+    const update = instance.update = reactiveEffect.run.bind(reactiveEffect)
+    update()
+  }
+
+
+  function patchComponent(oldVnode : Vnode,newVnode : Vnode,anchor : Node | null) {
+
+  }
+
+
+  function processComponent(__vnode__ : Vnode | null,vnode : Vnode,container : Node,anchor : Node | null) {
+    if(__vnode__) {
+      patchComponent(__vnode__,vnode,anchor)
+    } else {
+      mountComponent(vnode,container,anchor)
+    }
+  }
+
+
+
   function patch(__vnode__ : Vnode | null,vnode : Vnode,container : Node,anchor : Node | null) {   
     if(__vnode__ === vnode) {
       return
@@ -215,10 +273,10 @@ function createRenderer(renderOptions : any) {
       __vnode__ = null
     }
   
-    if(__vnode__) {
-      patchElement(__vnode__,vnode)
-    } else {
-      mountELement(vnode,container,anchor)
+    if(vnode.shapeFlag & ShapeFlags.ELEMENT) {
+      processElement(__vnode__,vnode,container,anchor)
+    } else if(vnode.shapeFlag & ShapeFlags.COMPONENT) {
+      processComponent(__vnode__,vnode,container,anchor)
     }
   
   }
