@@ -1,5 +1,6 @@
+import { LifecycleHooks } from ".."
 import { ReactiveEffect } from "../../reactivity"
-import { getLongestIncreasingSequence, ShapeFlags } from "../../shared"
+import { getLongestIncreasingSequence, invokeFunctions, ShapeFlags } from "../../shared"
 import { ComponentInstance, createComponentInstance, hasPropsChanged, updateProps } from "./component"
 import { createRenderApi } from "./renderApi"
 import { queueJob } from "./scheduler"
@@ -225,18 +226,32 @@ function createRenderer(renderOptions : any) {
     const componentUpdate = () => {
       if(component.isMounted) {
         const {newVnode} = component
+        const beforeUpdate = component[LifecycleHooks.BEFORE_UPDATE]
+        const updated = component[LifecycleHooks.UPDATEED]
+
         if(newVnode) {
           updateComponentPreRender(component,newVnode)
         }
 
+        beforeUpdate && invokeFunctions(beforeUpdate)
+
         const subTree = render.call(proxy)
         patch(component.subTree,subTree,container,anchor)
         component.subTree = subTree
+
+        updated && invokeFunctions(updated)
       } else {
+        const beforeMount = component[LifecycleHooks.BEFORE_MOUNT]
+        const mounted = component[LifecycleHooks.MOUNTED]
+
+        beforeMount && invokeFunctions(beforeMount)
+
         const subTree = render.call(proxy)
         patch(null,subTree,container,anchor)
         component.subTree = subTree
         component.isMounted = true
+
+        mounted && invokeFunctions(mounted)
       }
     }
     const reactiveEffect = new ReactiveEffect(componentUpdate,() => queueJob(component.update))

@@ -2,6 +2,15 @@ import { proxyRefs, reactive } from "../../reactivity"
 import { hasOwnProperty, isFunction, isObject, ShapeFlags, toUppercaseStart } from "../../shared"
 import { Vnode } from "./vnode"
 
+let currentComponentInstance : ComponentInstance | null = null
+function setCurrentComponentInstance(instance : ComponentInstance | null) {
+    currentComponentInstance = instance
+}
+function getCurrentComponentInstance() : ComponentInstance | null {
+    return currentComponentInstance
+}
+
+
 interface ComponentInstance {
     propsOptions : object
     props: object
@@ -61,7 +70,9 @@ function createComponentInstance(vnode : Vnode) : ComponentInstance {
             attrs: instance.attrs,
             slots: instance.slots,
         }
+        setCurrentComponentInstance(instance)
         const setupResult = setup(instance.props,setupContext)
+        setCurrentComponentInstance(null)
         if(isFunction(setupContext)) {
             instance.render = setupResult
         } else if(isObject(setupResult)) {
@@ -163,6 +174,8 @@ function initProxy(instance : ComponentInstance) {
 
 export {
     ComponentInstance,
+    setCurrentComponentInstance,
+    getCurrentComponentInstance,
     createComponentInstance,
     hasPropsChanged,
     updateProps,

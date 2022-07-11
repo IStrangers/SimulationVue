@@ -93,6 +93,13 @@ function getLongestIncreasingSequence(arr : Array<number>) : Array<number> {
   return result
 }
 
+function invokeFunctions(funs : Array<Function>) {
+  for(let i = 0; i < funs.length; i++) {
+    const fun = funs[i]
+    fun()
+  }
+}
+
 export {
   isObject,
   isNumber,
@@ -105,4 +112,5 @@ export {
   isUppercaseStart,
   removeExtraSpaces,
   getLongestIncreasingSequence,
+  invokeFunctions,
 }
