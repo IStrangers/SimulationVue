@@ -31,7 +31,7 @@ function createRenderer(renderOptions : any) {
 
 
 
-  function isNotParentNodeType(type : any) : boolean {
+  function isSymbolType(type : any) : boolean {
     return type === Text || type === Fragment
   }
 
@@ -39,7 +39,7 @@ function createRenderer(renderOptions : any) {
 
   function mountELement(vnode : Vnode,container : Node,anchor : Node | null) {
     const {type,props,shapeFlag,children} = vnode
-    const isNotParentNode = isNotParentNodeType(type)
+    const isNotParentNode = isSymbolType(type)
     let el = isNotParentNode ? container : hostCreateElement(type)
     if(props) {
       hostPatchProps(el,{},props)
@@ -239,7 +239,7 @@ function createRenderer(renderOptions : any) {
         component.isMounted = true
       }
     }
-    const reactiveEffect = new ReactiveEffect(componentUpdate,() => queueJob(update))
+    const reactiveEffect = new ReactiveEffect(componentUpdate,() => queueJob(component.update))
     const update = component.update = reactiveEffect.run.bind(reactiveEffect)
     update()
     vnode[VnodeTagAttr.COMPONENT] = component
@@ -299,12 +299,11 @@ function createRenderer(renderOptions : any) {
       __vnode__ = null
     }
   
-    if(vnode.shapeFlag & ShapeFlags.ELEMENT) {
-      processElement(__vnode__,vnode,container,anchor)
-    } else if(vnode.shapeFlag & ShapeFlags.COMPONENT) {
+    if(vnode.shapeFlag & ShapeFlags.COMPONENT) {
       processComponent(__vnode__,vnode,container,anchor)
+    }else if(vnode.shapeFlag & ShapeFlags.ELEMENT || isSymbolType(vnode.type)) {
+      processElement(__vnode__,vnode,container,anchor)
     }
-  
   }
   
 

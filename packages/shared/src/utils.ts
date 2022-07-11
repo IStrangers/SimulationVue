@@ -22,6 +22,13 @@ function isFunction(value : any) : boolean {
   return typeof value === 'function'
 }
 
+function toUppercaseStart(value : string) : string {
+  if(value) {
+    value = value.replace(value[0],value[0].toUpperCase());
+  }
+  return value
+}
+
 function isUppercaseStart(value : string) : boolean {
   if(value) {
     const c = value.charAt(0)
@@ -94,6 +101,7 @@ export {
   isArray,
   isFunction,
   hasOwnProperty,
+  toUppercaseStart,
   isUppercaseStart,
   removeExtraSpaces,
   getLongestIncreasingSequence,

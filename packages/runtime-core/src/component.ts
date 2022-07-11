@@ -1,5 +1,5 @@
 import { proxyRefs, reactive } from "../../reactivity"
-import { hasOwnProperty, isFunction, isObject } from "../../shared"
+import { hasOwnProperty, isFunction, isObject, ShapeFlags, toUppercaseStart } from "../../shared"
 import { Vnode } from "./vnode"
 
 interface ComponentInstance {
@@ -10,6 +10,7 @@ interface ComponentInstance {
     vnode: Vnode
     newVnode: Vnode | null
     subTree: Vnode | null
+    slots: object
     isMounted: boolean
     setupState: object,
     render: Function
@@ -33,6 +34,7 @@ function createComponentInstance(vnode : Vnode) : ComponentInstance {
         vnode,
         newVnode: null,
         subTree: null,
+        slots: {},
         isMounted: false,
         setupState: {},
         render,
@@ -41,6 +43,7 @@ function createComponentInstance(vnode : Vnode) : ComponentInstance {
     }
 
     initProps(instance,vnode.props)
+    initSlots(instance,vnode)
     initProxy(instance)
 
     if(isFunction(data) === false) {
@@ -49,7 +52,15 @@ function createComponentInstance(vnode : Vnode) : ComponentInstance {
     instance.data = reactive(data.call(instance.proxy))
 
     if(setup) {
-        const setupContext = {}
+        const setupContext = {
+            emit(event : string,...args : Array<any>) {
+                const eventName = `on${toUppercaseStart(event)}`
+                const handler = instance.vnode.props[eventName]
+                handler && handler(args)
+            },
+            attrs: instance.attrs,
+            slots: instance.slots,
+        }
         const setupResult = setup(instance.props,setupContext)
         if(isFunction(setupContext)) {
             instance.render = setupResult
@@ -106,8 +117,16 @@ function updateProps(componentInstance : ComponentInstance,newProps : any) {
     }
 }
 
+function initSlots(componentInstance : ComponentInstance,vnode : Vnode) {
+    const {shapeFlag,children} = vnode
+    if(shapeFlag & ShapeFlags.SLOTS_CHILDREN) {
+        componentInstance.slots = children
+    }
+}
+
 const publicPropertyMap = {
-    $attrs: (i : any) => i.attrs
+    $attrs: (i : any) => i.attrs,
+    $slots: (i : any) => i.slots
 }
 function initProxy(instance : ComponentInstance) {
     instance.proxy = new Proxy(instance,{
