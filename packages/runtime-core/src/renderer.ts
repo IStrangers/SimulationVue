@@ -240,7 +240,7 @@ function createRenderer(renderOptions : any) {
       }
     }
     const reactiveEffect = new ReactiveEffect(componentUpdate,() => queueJob(update))
-    const update = component["update"] = reactiveEffect.run.bind(reactiveEffect)
+    const update = component.update = reactiveEffect.run.bind(reactiveEffect)
     update()
     vnode[VnodeTagAttr.COMPONENT] = component
   }
