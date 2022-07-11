@@ -1,6 +1,6 @@
 import { isArray, isObject, isString, ShapeFlags } from "../../shared"
 
-enum VnodeTagAttr {
+const enum VnodeTagAttr {
     IS_VNODE = "__isVnode__",
     COMPONENT = "__component__",
 }

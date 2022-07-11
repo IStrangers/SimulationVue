@@ -1,7 +1,7 @@
 import {isObject} from "../../shared/src/utils"
 import { track, trigger } from "./effect"
 
-enum ReactiveTagAttr {
+const enum ReactiveTagAttr {
     IS_REACTIVE = "__isReactive__",
     IS_REF = "__isRef__",
 }

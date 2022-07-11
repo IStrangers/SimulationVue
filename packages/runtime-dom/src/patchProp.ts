@@ -1,4 +1,4 @@
-enum PatchTagAttr {
+const enum PatchTagAttr {
   BIND_INVOKER_EVENT_MAPPING = "__bindInvokerEventMapping__",
 }
 

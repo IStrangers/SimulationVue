@@ -1,2 +1,2 @@
 export * from "./src/utils"
-export * from "./src/ShapeFlags"
+export * from "./src/shapeFlags"

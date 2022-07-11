@@ -1,4 +1,4 @@
-export const enum ShapeFlags {
+const enum ShapeFlags {
     ELEMENT = 1,
     FUNCTIONAL_COMPONENT = 1 << 1,
     STATEFUL_COMPONENT = 1 << 2,
@@ -10,4 +10,8 @@ export const enum ShapeFlags {
     COMPONENT_SHOULD_KEEP_ALIVE = 1 << 8,
     COMPONENT_KEPT_ALIVE = 1 << 9,
     COMPONENT = ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COMPONENT
+}
+
+export {
+    ShapeFlags
 }

@@ -6,7 +6,7 @@ import { createRenderApi } from "./renderApi"
 import { queueJob } from "./scheduler"
 import { Fragment, isSameVnode, Text, Vnode, VnodeTagAttr } from "./vnode"
 
-enum ContainerTagAttr {
+const enum ContainerTagAttr {
   IS_ROOT = "__isRoot__",
   VNODE = "__vnode__"
 }

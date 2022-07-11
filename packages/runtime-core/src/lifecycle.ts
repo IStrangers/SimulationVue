@@ -1,6 +1,6 @@
 import { ComponentInstance, getCurrentComponentInstance } from "./component"
 
-enum LifecycleHooks {
+const enum LifecycleHooks {
     BEFORE_MOUNT = "__beforeMount__",
     MOUNTED = "__mounted__",
     BEFORE_UPDATE = "__beforeUpdate__",
