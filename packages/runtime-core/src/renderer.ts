@@ -1,6 +1,7 @@
 import { LifecycleHooks } from ".."
 import { ReactiveEffect } from "../../reactivity"
 import { getLongestIncreasingSequence, invokeFunctions, ShapeFlags } from "../../shared"
+import { PatchFlags } from "../../shared/src/patchFlags"
 import { ComponentInstance, createComponentInstance, hasPropsChanged, updateProps } from "./component"
 import { createRenderApi } from "./renderApi"
 import { queueJob } from "./scheduler"
@@ -19,6 +20,7 @@ function createRenderer(renderOptions : any) {
     hostInsert,
     hostSetElementText,
     hostRemove,
+    hostPatchProp,
     hostPatchProps,
   } = createRenderApi(renderOptions)
 
@@ -189,6 +191,16 @@ function createRenderer(renderOptions : any) {
 
 
 
+  function patchDynamicChildren(oldDynamicChildren : Array<Vnode>,newDynamicChildren : Array<Vnode>) {
+    if(oldDynamicChildren && newDynamicChildren) {
+      for(let i = 0; i < newDynamicChildren.length; i++) {
+        patchElement(oldDynamicChildren[i],newDynamicChildren[i])
+      }
+    }
+  }
+
+
+
   function patchElement(oldVnode : Vnode,newVnode : Vnode) {
     if(!oldVnode.el) {
       return
@@ -196,8 +208,20 @@ function createRenderer(renderOptions : any) {
     let el = (newVnode.el = oldVnode.el)
     const oldProps = oldVnode.props || {}
     const newProps = newVnode.props || {}
-    hostPatchProps(el,oldProps,newProps)
-    patchChildren(oldVnode,newVnode,el)
+
+    if(newVnode.patchFlag & PatchFlags.CLASS) {
+      if(oldProps.class !== newProps.class) {
+        hostPatchProp(el,"class",null,newProps.class)
+      }
+    } else {
+      hostPatchProps(el,oldProps,newProps)
+    }
+
+    if(oldVnode.dynamicChildren && newVnode.dynamicChildren) {
+      patchDynamicChildren(oldVnode.dynamicChildren,newVnode.dynamicChildren)
+    } else {
+      patchChildren(oldVnode,newVnode,el)
+    }
   }
 
 
@@ -235,7 +259,7 @@ function createRenderer(renderOptions : any) {
 
         beforeUpdate && invokeFunctions(beforeUpdate)
 
-        const subTree = render.call(proxy)
+        const subTree = render.call(proxy,proxy)
         patch(component.subTree,subTree,container,anchor)
         component.subTree = subTree
 
@@ -246,7 +270,7 @@ function createRenderer(renderOptions : any) {
 
         beforeMount && invokeFunctions(beforeMount)
 
-        const subTree = render.call(proxy)
+        const subTree = render.call(proxy,proxy)
         patch(null,subTree,container,anchor)
         component.subTree = subTree
         component.isMounted = true
