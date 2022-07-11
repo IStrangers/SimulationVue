@@ -1,6 +1,6 @@
 import { ReactiveEffect } from "../../reactivity"
 import { getLongestIncreasingSequence, ShapeFlags } from "../../shared"
-import { createComponentInstance } from "./component"
+import { ComponentInstance, createComponentInstance, hasPropsChanged, updateProps } from "./component"
 import { createRenderApi } from "./renderApi"
 import { queueJob } from "./scheduler"
 import { Fragment, isSameVnode, Text, Vnode, VnodeTagAttr } from "./vnode"
@@ -211,11 +211,24 @@ function createRenderer(renderOptions : any) {
 
 
 
+  function updateComponentPreRender(component : ComponentInstance,newVnode : Vnode) {
+    component.vnode = newVnode
+    component.newVnode = null
+    updateProps(component,newVnode.props)
+  }
+
+
+
   function mountComponent(vnode : Vnode,container : Node,anchor : Node | null) {
     const component = createComponentInstance(vnode)
     const {render,proxy} = component
     const componentUpdate = () => {
       if(component.isMounted) {
+        const {newVnode} = component
+        if(newVnode) {
+          updateComponentPreRender(component,newVnode)
+        }
+
         const subTree = render.call(proxy)
         patch(component.subTree,subTree,container,anchor)
         component.subTree = subTree
@@ -234,8 +247,28 @@ function createRenderer(renderOptions : any) {
 
 
 
-  function patchComponent(oldVnode : Vnode,newVnode : Vnode,anchor : Node | null) {
+  function shouldUpdateComponent(oldVnode : Vnode,newVnode : Vnode,) : boolean {
+    const oldProps = oldVnode.props
+    const newProps = newVnode.props
+    if(oldProps === newProps) {
+      return false
+    }
+    const oldChildren = oldVnode.children
+    const newChildren = newVnode.children
+    if(oldChildren || newChildren) {
+      return true
+    }
+    return hasPropsChanged(oldProps,newProps)
+  }
 
+
+
+  function patchComponent(oldVnode : Vnode,newVnode : Vnode,anchor : Node | null) {
+    const componentInstance = (newVnode[VnodeTagAttr.COMPONENT] = oldVnode[VnodeTagAttr.COMPONENT])
+    if(shouldUpdateComponent(oldVnode,newVnode)) {
+      componentInstance.newVnode = newVnode
+      componentInstance.update()
+    }
   }
 
 
