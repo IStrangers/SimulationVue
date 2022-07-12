@@ -26,7 +26,7 @@ interface ParseContext {
   parseElement: Function
   parseElementTag: Function
   parseElementAttribute: Function
-  parseElementChildrenAstNode: Function
+  parseElementChildren: Function
   parseInterpolation: Function
   parseComment: Function
   parseText: Function
@@ -62,21 +62,21 @@ function createParseContext(template : string) : ParseContext{
         source: this.originalSource.slice(startCursor.offset,endCursor.offset)
       }
     },
-    advancePositionWithMutation(length : number) {
+    advancePositionWithMutation(cursor : any,source : string,length : number) {
       let linesCount = 0
       let linePos = -1
       for(let i = 0; i < length; i++) {
-        if(this.source.charCodeAt(i) === 10) {
+        if(source.charCodeAt(i) === 10) {
           linesCount++
           linePos = i
         }
       }
-      this.line += linesCount
-      this.column = linePos === -1 ? (this.column + length) : (length - linePos)
-      this.offset += length
+      cursor.line += linesCount
+      cursor.column = linePos === -1 ? (cursor.column + length) : (length - linePos)
+      cursor.offset += length
     },
     advanceBy(length : number = 1) {
-      this.advancePositionWithMutation(length)
+      this.advancePositionWithMutation(this,this.source,length)
       this.source = this.source.slice(length)
     },
     isEnd() {
@@ -100,14 +100,83 @@ function createParseContext(template : string) : ParseContext{
     parseElementAttribute() {
       
     },
-    parseElementChildrenAstNode(parent : any) {
-      
+    parseElementChildren(parent : any) {
+      const nodes: Array<any> = []
+      while(!this.isEnd()) {
+        let node;
+        if(this.isComment()) {
+          node = this.parseComment()
+        } else if(this.isElement()) {
+          node = this.parseElement()
+        } else if(this.isInterpolation()) {
+          node = this.parseInterpolation()
+        } else {
+          node = this.parseText()
+        }
+        nodes.push(node)
+      }
+      return nodes
     },
     parseInterpolation(parent : any) {
+      const startCursor = this.getCursor()
+      const {interpolationStart,interpolationEnd} = this.options.delimiters
+      this.advanceBy(interpolationStart.length)
+      
+      const innerStartCursor = this.getCursor()
+      const innerEndCursor = this.getCursor()
 
+      const endIndex = this.source.indexOf(interpolationEnd)
+      const preContent = this.parseTextData(endIndex)
+      const express = preContent.trim()
+      const startOffset = preContent.indexOf(express)
+      if(startOffset > 0) {
+        this.advancePositionWithMutation(innerStartCursor,preContent,startOffset)
+      }
+      const endOffset = startOffset + express.length
+      this.advancePositionWithMutation(innerEndCursor,preContent,endOffset)
+
+      this.advanceBy(interpolationEnd.length)
+      return {
+        parent,
+        type: NodeTypes.INTERPOLATION,
+        content : {
+          type: NodeTypes.SIMPLE_EXPRESSION,
+          express,
+          location: this.getSelection(innerStartCursor,innerEndCursor)
+        },
+        location: this.getSelection(startCursor)
+      }
     },
     parseComment(parent : any) {
+      const startCursor = this.getCursor()
+      const commentStart = "<!--"
+      const commentEnd = "-->"
+      this.advanceBy(commentStart.length)
+      
+      const innerStartCursor = this.getCursor()
+      const innerEndCursor = this.getCursor()
 
+      const endIndex = this.source.indexOf(commentEnd)
+      const preContent = this.parseTextData(endIndex)
+      const express = preContent.trim()
+      const startOffset = preContent.indexOf(express)
+      if(startOffset > 0) {
+        this.advancePositionWithMutation(innerStartCursor,preContent,startOffset)
+      }
+      const endOffset = startOffset + express.length
+      this.advancePositionWithMutation(innerEndCursor,preContent,endOffset)
+
+      this.advanceBy(commentEnd.length)
+      return {
+        parent,
+        type: NodeTypes.COMMENT,
+        content : {
+          type: NodeTypes.COMMENT,
+          express,
+          location: this.getSelection(innerStartCursor,innerEndCursor)
+        },
+        location: this.getSelection(startCursor)
+      }
     },
     parseText(parent : any) {
       const tokens = ["<",this.options.delimiters.interpolationStart]
@@ -136,22 +205,8 @@ function createParseContext(template : string) : ParseContext{
 }
 
 function parse(template : string) : Array<any> {
-  const nodes: Array<any> = []
   const parseContext = createParseContext(template);
-  while(!parseContext.isEnd()) {
-    let node;
-    if(parseContext.isComment()) {
-
-    } else if(parseContext.isElement()) {
-
-    } else if(parseContext.isInterpolation()) {
-
-    } else {
-      node = parseContext.parseText()
-    }
-    nodes.push(node)
-  }
-  return nodes
+  return parseContext.parseElementChildren()
 }
 
 export {
