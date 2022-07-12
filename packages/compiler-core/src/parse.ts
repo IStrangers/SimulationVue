@@ -8,7 +8,7 @@ interface ParseOptions {
   }
 }
 
-interface ParseContext {
+interface Parser {
   options: ParseOptions
   line: number
   column: number
@@ -19,13 +19,16 @@ interface ParseContext {
   getSelection: Function
   advancePositionWithMutation: Function
   advanceBy: Function
+  advanceBySpaces: Function
   isEnd: Function
   isElement: Function
   isInterpolation: Function
   isComment: Function
   parseElement: Function
   parseElementTag: Function
+  parseElementAttributes: Function
   parseElementAttribute: Function
+  parseElementAttributeValue: Function
   parseElementChildren: Function
   parseInterpolation: Function
   parseComment: Function
@@ -33,7 +36,7 @@ interface ParseContext {
   parseTextData: Function
 }
 
-function createParseContext(template : string) : ParseContext{
+function createParser(template : string) : Parser{
   return {
     options: {
       isRemoveExtraSpaces: true,
@@ -79,8 +82,14 @@ function createParseContext(template : string) : ParseContext{
       this.advancePositionWithMutation(this,this.source,length)
       this.source = this.source.slice(length)
     },
+    advanceBySpaces: function() {
+      const match = /^[ \n\r\t\f]+/.exec(this.source)
+      if(match) {
+        this.advanceBy(match[0].length)
+      }
+    },
     isEnd() {
-      return !this.source
+      return !this.source || this.source.startsWith("</")
     },
     isElement() : boolean {
       return this.source.startsWith("<")
@@ -92,26 +101,115 @@ function createParseContext(template : string) : ParseContext{
       return this.source.startsWith("<!--")
     },
     parseElement(parent : any) {
-
+      const el = this.parseElementTag(parent)
+      el.children = this.parseElementChildren(el)
+      if(this.source.startsWith("</")) {
+        this.parseElementTag()
+      }
+      el.location = this.getSelection(el.location.startCursor)
+      return el
     },
-    parseElementTag() {
-
+    parseElementTag(parent : any) {
+      const startCursor = this.getCursor()
+      const match = /^<\/?([A-z][^ \t\r\n/>]*)/.exec(this.source)
+      if(!match) {
+        return
+      }
+      const tag = match[1]
+      this.advanceBy(match[0].length)
+      this.advanceBySpaces()
+      const props = this.parseElementAttributes()
+      const isSelfClosing = this.source.startsWith("/>")
+      this.advanceBy(isSelfClosing ? 2 : 1)
+      return {
+        parent,
+        type: NodeTypes.ELEMENT,
+        tag,
+        props,
+        isSelfClosing,
+        location: this.getSelection(startCursor)
+      }
+    },
+    parseElementAttributes() {
+      const props : Array<any> = []
+      while(!this.source.startsWith(">") && !this.isEnd()) {
+        const attr = this.parseElementAttribute()
+        props.push(attr)
+        this.advanceBySpaces()
+      }
+      return props
     },
     parseElementAttribute() {
-      
+      const startCursor = this.getCursor()
+      const match = /^[^\t\r\n\f />][^\t\r\n\f />=]*/.exec(this.source)
+      if(!match) {
+        return
+      }
+
+      const name = match[0]
+      let value
+      let isNoAttributeValue = false
+      this.advanceBy(name.length)
+      this.advanceBySpaces()
+      if(this.source.startsWith("=")) {
+        this.advanceBy(1)
+        this.advanceBySpaces()
+        value = this.parseElementAttributeValue()
+      } else {
+        isNoAttributeValue = true
+      }
+
+      const isDirective = name.startsWith("@") || name.startsWith(":") || name.startsWith("v-")
+      let type = isDirective ? NodeTypes.DIRECTIVE : NodeTypes.ATTRIBUTE
+      return {
+        type,
+        name,
+        isNoAttributeValue,
+        value: {
+          type: NodeTypes.TEXT,
+          ...value
+        },
+        location: this.getSelection(startCursor)
+      }
+    },
+    parseElementAttributeValue() {
+      const startCursor = this.getCursor()
+      const quote = this.source[0]
+
+      let content
+      if(quote === `'` || quote === `"`) {
+        this.advanceBy(1)
+        const endQuoteIndex = this.source.indexOf(quote)
+        content = this.parseTextData(endQuoteIndex)
+        this.advanceBy(1)
+      } else {
+        const endSpacesIndex = this.source.indexOf(" ")
+        let endCloseingIndex = this.source.indexOf(">")
+        endCloseingIndex = endCloseingIndex !== -1 ? endCloseingIndex : this.source.indexOf("/>")
+        let endIndex = endSpacesIndex;
+        if(endSpacesIndex === -1 || endSpacesIndex > endCloseingIndex) {
+          endIndex = endCloseingIndex
+        }
+        content = this.parseTextData(endIndex)
+      }
+
+      return {
+        content,
+        location: this.getSelection(startCursor)
+      }
     },
     parseElementChildren(parent : any) {
       const nodes: Array<any> = []
       while(!this.isEnd()) {
         let node;
         if(this.isComment()) {
-          node = this.parseComment()
+          node = this.parseComment(parent)
         } else if(this.isElement()) {
-          node = this.parseElement()
+          node = this.parseElement(parent)
         } else if(this.isInterpolation()) {
-          node = this.parseInterpolation()
+          node = this.parseInterpolation(parent)
         } else {
-          node = this.parseText()
+          node = this.parseText(parent)
         }
         nodes.push(node)
       }
@@ -205,8 +303,8 @@ function createParseContext(template : string) : ParseContext{
 }
 
 function parse(template : string) : Array<any> {
-  const parseContext = createParseContext(template);
-  return parseContext.parseElementChildren()
+  const parser = createParser(template);
+  return parser.parseElementChildren()
 }
 
 export {
