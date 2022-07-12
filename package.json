@@ -6,7 +6,8 @@
   "scripts": {
     "dev:reactivity": "node scripts/dev.js reactivity",
     "dev:runtime-dom": "node scripts/dev.js runtime-dom",
-    "dev:runtime-core": "node scripts/dev.js runtime-core"
+    "dev:runtime-core": "node scripts/dev.js runtime-core",
+    "dev:compiler-core": "node scripts/dev.js compiler-core"
   },
   "repository": {
     "type": "git",

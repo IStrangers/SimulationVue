@@ -1,0 +1,14 @@
+{
+  "name": "@sv/compiler-core",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "buildOptions": {
+    "name": "CompilerCore",
+    "formats": [
+      "iife",
+      "cjs",
+      "esm"
+    ]
+  }
+}
