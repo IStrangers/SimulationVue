@@ -44,7 +44,7 @@ function hasOwnProperty(value : any,key : any) : boolean {
 } 
 
 function removeExtraSpaces(value : string) : string {
-  return value.replace(/[\s]+/g," ").trim()
+  return value.replace(/[\s]+/g,"")
 }
 
 function getLongestIncreasingSequence(arr : Array<number>) : Array<number> {

@@ -1,3 +1,4 @@
+import { removeExtraSpaces } from "../../shared"
 import { NodeTypes } from "./ast"
 
 interface ParseOptions {
@@ -210,6 +211,9 @@ function createParser(template : string) : Parser{
           node = this.parseInterpolation(parent)
         } else {
           node = this.parseText(parent)
+          if(this.options.isRemoveExtraSpaces && removeExtraSpaces(node.content) === ""){
+            continue
+          }
         }
         nodes.push(node)
       }
@@ -302,9 +306,21 @@ function createParser(template : string) : Parser{
   }
 }
 
-function parse(template : string) : Array<any> {
+function createRoot(children? : Array<any>,location? : any) {
+  return {
+    type: NodeTypes.ROOT,
+    children,
+    location,
+  }
+}
+
+function parse(template : string) : any {
   const parser = createParser(template);
-  return parser.parseElementChildren()
+  const startCursor = parser.getCursor()
+  const root = createRoot()
+  root.children = parser.parseElementChildren(root)
+  root.location = parser.getSelection(startCursor)
+  return root
 }
 
 export {
