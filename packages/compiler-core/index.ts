@@ -5,8 +5,7 @@ import { transform } from "./src/transform"
 function compile(template : string) {
   const ast = parse(template)
   transform(ast)
-  return ast
-  //return generate(ast)
+  return generate(ast)
 }
 
 export {

@@ -1,15 +1,7 @@
 import { Vnode } from "../../runtime-core"
 import { PatchFlags } from "../../shared/src/patchFlags"
 import { NodeTypes } from "./ast"
-
-const enum CodegenNodeCall {
-    TO_DISPLAY_STRING = "toDisplayString",
-    CREATE_TEXT_VNODE = "createTextVnode",
-    CREATE_ELEMENT_VNODE = "createElementVnode",
-    CREATE_ELEMENT_BLOCK = "createElementBlock",
-    OPEN_BLOCK = "openBlock",
-    FRAGMENT = "fragment",
-}
+import { CodegenNodeCall } from "./codegenNodeCall"
 
 function isTextNode(node : Vnode) {
     return node.type === NodeTypes.INTERPOLATION || node.type === NodeTypes.TEXT
@@ -18,20 +10,20 @@ function isTextNode(node : Vnode) {
 function createTransform(root : any) {
     return {
         currentNode: root,
-        countMap: new Map(),
+        codegenNodeCallMap: new Map(),
         incrementCount(name : any) {
-            const count = this.countMap.get(name) || 0
-            this.countMap.set(name,count + 1)
+            const count = this.codegenNodeCallMap.get(name) || 0
+            this.codegenNodeCallMap.set(name,count + 1)
             return name
         },
         reduceCount(name : any) {
-            let count = this.countMap.get(name)
+            let count = this.codegenNodeCallMap.get(name)
             if(count) {
                 count -= 1
                 if(count > 0) {
-                    this.countMap.set(name,count)
+                    this.codegenNodeCallMap.set(name,count)
                 } else {
-                    this.countMap.delete(name)
+                    this.codegenNodeCallMap.delete(name)
                 }
             }
             return name
@@ -64,14 +56,19 @@ function createTransform(root : any) {
             const { 
                 children
             } = this.currentNode
-            if(children && children.length === 1) {
+            if(!children || children.length <= 0) {
+                return
+            }
+            if(children.length === 1) {
                 const child = children[0]
-                this.currentNode.codegenNode = child.codegenNode
                 if(child.type === NodeTypes.ELEMENT && child.codegenNode) {
+                    this.currentNode.codegenNode = child.codegenNode
                     this.reduceCount(CodegenNodeCall.CREATE_ELEMENT_VNODE)
                     this.incrementCount(CodegenNodeCall.OPEN_BLOCK)
                     this.incrementCount(CodegenNodeCall.CREATE_ELEMENT_BLOCK)
                     this.currentNode.codegenNode.isBlock = true
+                } else {
+                    this.currentNode.codegenNode = child
                 }
             } else {
                 const tag = this.incrementCount(CodegenNodeCall.FRAGMENT)
@@ -83,6 +80,7 @@ function createTransform(root : any) {
                 this.incrementCount(CodegenNodeCall.CREATE_ELEMENT_BLOCK)
                 this.currentNode.codegenNode = codegenNode
             }
+            this.currentNode.codegenNodeCallMap = this.codegenNodeCallMap
         },
         transformElement() {
             const { 
@@ -141,7 +139,6 @@ function createTransform(root : any) {
                     const { type,isNoAttributeValue,name,value } = props[i]
                     properties.push({
                         type,
-                        isNoAttributeValue,
                         key: name,
                         value : isNoAttributeValue ? null : value.content
                     })
@@ -182,7 +179,6 @@ function createTransform(root : any) {
 function transform(ast : any) {
     const transform = createTransform(ast)
     transform.traverse()
-    console.log(transform.countMap)
 }
 
 export {
