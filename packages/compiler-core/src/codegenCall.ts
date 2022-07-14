@@ -1,4 +1,4 @@
-const enum CodegenNodeCall {
+const enum CodegenCall {
   TO_DISPLAY_STRING = "toDisplayString",
   CREATE_TEXT_VNODE = "createTextVnode",
   CREATE_ELEMENT_VNODE = "createElementVnode",
@@ -8,5 +8,5 @@ const enum CodegenNodeCall {
 }
 
 export {
-  CodegenNodeCall
+  CodegenCall
 }

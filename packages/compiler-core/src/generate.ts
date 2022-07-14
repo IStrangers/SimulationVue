@@ -1,5 +1,6 @@
+import { isArray, isNumber, isString } from "../../shared"
 import { NodeTypes } from "./ast"
-import { CodegenNodeCall } from "./codegenNodeCall"
+import { CodegenCall } from "./codegenCall"
 
 function createCodegen(root : any) {
     return {
@@ -11,7 +12,7 @@ function createCodegen(root : any) {
         indent() {
             this.newLine(++this.indentLevel)
         },
-        deindent(whithoutNewLine = true) {
+        deindent(whithoutNewLine = false) {
             if(whithoutNewLine) {
                 --this.indentLevel
             } else {
@@ -22,64 +23,87 @@ function createCodegen(root : any) {
             n = n === -1 ? this.indentLevel : n
             this.addCode("\n" + " ".repeat(n * 2))
         },
+        genNullableArgs(args: Array<any>){
+            let i = args.length
+            while (i--) {
+              if (args[i] != null) break
+            }
+            return args.slice(0, i + 1).map(arg => arg || `null`)
+        },
         genElementCode(codegenNode : any) {
             this.genNodeCode(codegenNode.codegenNode)
         },
         genVnodeCallCode(codegenNode : any) {
             const { tag,props,isBlock,call,children } = codegenNode
-            isBlock && this.addCode(`(${CodegenNodeCall.OPEN_BLOCK}(),`)
-
-            this.addCode(`${call}(${tag}`)
-            this.genElementPropsCode(props)            
-
-            if(children && children.length > 0) {
-                const isNultipleNodes = children.length > 1
-                if(isNultipleNodes) {
-                    this.addCode(`[`);
-                    this.indent()
-                }
-                for(let i = 0; i < children.length; i++) {
-                    this.genNodeCode(children[i])
-                    if((i + 1) < children.length) {
-                        this.addCode(",")
-                    } else {
-                        isNultipleNodes && this.deindent();
-                    }
-                    isNultipleNodes && this.newLine()
-                }
-                isNultipleNodes && this.addCode(`]`)
-            }
-
+            isBlock && this.addCode(`(${CodegenCall.OPEN_BLOCK}(),`)
+            this.addCode(`${call}(`)
+            const nodeList = this.genNullableArgs([tag,props,children])
+            this.genNodeList(nodeList)
             this.addCode(`)`)
             isBlock && this.addCode(`)`)
         },
-        genElementPropsCode(props : any) {
+        genObjectExpression(props : any) {
             if(!props) {
+                this.addCode(`{}`)
                 return
             }
             const { properties } = props
-            this.addCode(`,`)
-            this.addCode(`{`)
-            this.indent()
+            if (!properties.length) {
+                this.addCode(`{}`)
+                return
+            }
+            const isNultipleProp = properties.length > 1
+            this.addCode(isNultipleProp ? `{` : `{ `)
+            isNultipleProp && this.indent()
             for(let i = 0; i < properties.length; i++) {
                 const { type,key,value } = properties[i]
                 const val = type === NodeTypes.DIRECTIVE ? value : `"${value}"`
-                this.addCode(`${key}:${val}`)
-                if((i + 1) < properties.length) {
-                    this.addCode(",")
-                } else {
-                    this.deindent()
+                this.addCode(key)
+                this.addCode(`: `)
+                this.addCode(val)
+                if (i < properties.length - 1) {
+                    this.addCode(`,`)
+                    this.newLine()
                 }
-                this.newLine()
             }
-            this.addCode(`}`)
-            this.addCode(`,`)
+            isNultipleProp && this.deindent()
+            this.addCode(isNultipleProp ? `}` : ` }`)
+        },
+        genNodeArray(nodeArray : Array<any>) {
+            if(!nodeArray || nodeArray.length <= 0) {
+                return
+            }
+            const isNultipleNodes = nodeArray.length > 1
+            this.addCode(`[`)
+            isNultipleNodes && this.indent()
+            this.genNodeList(nodeArray,isNultipleNodes)
+            isNultipleNodes && this.deindent()
+            this.addCode(`]`)
+        },
+        genNodeList(nodeList : Array<any>,isNultipleNodes : boolean = false) {
+            if(!nodeList || nodeList.length <= 0) {
+                return
+            }
+            for(let i = 0; i < nodeList.length; i++) {
+                const node = nodeList[i]
+                if(isString(node) || isNumber(node)) {
+                    this.addCode(node)
+                } else if(isArray(node)) {
+                    this.genNodeArray(node)
+                } else {
+                    this.genNodeCode(node)
+                }
+                if((i + 1) < nodeList.length) {
+                    this.addCode(",")
+                    isNultipleNodes && this.newLine()
+                }
+            }
         },
         genTextCode(codegenNode : any) {
             this.addCode(JSON.stringify(codegenNode.content))
         },
         genInterpolationCode(codegenNode : any) {
-            this.addCode(`${CodegenNodeCall.TO_DISPLAY_STRING}(`)
+            this.addCode(`${CodegenCall.TO_DISPLAY_STRING}(`)
             this.genNodeCode(codegenNode.content)
             this.addCode(`)`)
         },
@@ -91,12 +115,23 @@ function createCodegen(root : any) {
         },
         genJsCallCode(codegenNode : any) {
             const { type,call,args } = codegenNode
-            this.addCode(`${call}(${args.map((arg : any) => {
-                return arg.type !== NodeTypes.TEXT ? arg.content : `"${arg.content}"`
-            }).join()})`)
+            this.addCode(`${call}(`)
+            this.genNodeList(args)
+            this.addCode(`)`)
         },
         genCompoundExpression(codegenNode : any) {
-            
+            const { children } = codegenNode
+            if(!children) {
+                return
+            }
+            for (let i = 0; i < children.length; i++) {
+                const child = children![i]
+                if (isString(child)) {
+                    this.addCode(child)
+                } else {
+                    this.genNodeCode(child)
+                }
+            }
         },
         genNodeCode(codegenNode : any) {
             const { type } = codegenNode
@@ -125,6 +160,9 @@ function createCodegen(root : any) {
                 case NodeTypes.JS_CALL_EXPRESSION:
                     this.genJsCallCode(codegenNode)
                     break
+                case NodeTypes.JS_OBJECT_EXPRESSION:
+                    this.genObjectExpression(codegenNode)
+                    break
             }
         },
         genRootCode(root : any) {
@@ -137,11 +175,11 @@ function createCodegen(root : any) {
         },
         genCode() {
             const {
-                codegenNodeCallMap
+                CodegenCallMap
             } = root
-            if(codegenNodeCallMap && codegenNodeCallMap.size > 0) {
-                const codegenNodeCalls = [...codegenNodeCallMap.keys()].join(`,`)
-                this.addCode(`const { ${codegenNodeCalls} } from SimulationVue`)
+            if(CodegenCallMap && CodegenCallMap.size > 0) {
+                const CodegenCalls = [...CodegenCallMap.keys()].join(`,`)
+                this.addCode(`const { ${CodegenCalls} } from SimulationVue`)
                 this.newLine()
                 this.newLine()
             }
@@ -153,7 +191,6 @@ function createCodegen(root : any) {
             this.addCode(`return `)
             this.genRootCode(root)
             this.deindent()
-            this.newLine()
             this.addCode(`}`)
             return this.code
         },

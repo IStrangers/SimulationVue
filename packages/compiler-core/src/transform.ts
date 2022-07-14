@@ -1,7 +1,7 @@
 import { Vnode } from "../../runtime-core"
 import { PatchFlags } from "../../shared/src/patchFlags"
 import { NodeTypes } from "./ast"
-import { CodegenNodeCall } from "./codegenNodeCall"
+import { CodegenCall } from "./codegenCall"
 
 function isTextNode(node : Vnode) {
     return node.type === NodeTypes.INTERPOLATION || node.type === NodeTypes.TEXT
@@ -29,7 +29,7 @@ function createTransform(root : any) {
             return name
         },
         createCallExpression(args : Array<any>) {
-            const call = this.incrementCount(CodegenNodeCall.CREATE_TEXT_VNODE)
+            const call = this.incrementCount(CodegenCall.CREATE_TEXT_VNODE)
             return {
                 type: NodeTypes.JS_CALL_EXPRESSION,
                 call,
@@ -43,7 +43,7 @@ function createTransform(root : any) {
             }
         },
         createVnodeCall(tag : string,props : any,children : Array<any>) {
-            const call = this.incrementCount(CodegenNodeCall.CREATE_ELEMENT_VNODE)
+            const call = this.incrementCount(CodegenCall.CREATE_ELEMENT_VNODE)
             return {
                 type: NodeTypes.VNODE_CALL,
                 call,
@@ -63,21 +63,21 @@ function createTransform(root : any) {
                 const child = children[0]
                 if(child.type === NodeTypes.ELEMENT && child.codegenNode) {
                     this.currentNode.codegenNode = child.codegenNode
-                    this.reduceCount(CodegenNodeCall.CREATE_ELEMENT_VNODE)
-                    this.incrementCount(CodegenNodeCall.OPEN_BLOCK)
-                    this.incrementCount(CodegenNodeCall.CREATE_ELEMENT_BLOCK)
+                    this.reduceCount(CodegenCall.CREATE_ELEMENT_VNODE)
+                    this.incrementCount(CodegenCall.OPEN_BLOCK)
+                    this.incrementCount(CodegenCall.CREATE_ELEMENT_BLOCK)
                     this.currentNode.codegenNode.isBlock = true
                 } else {
                     this.currentNode.codegenNode = child
                 }
             } else {
-                const tag = this.incrementCount(CodegenNodeCall.FRAGMENT)
+                const tag = this.incrementCount(CodegenCall.FRAGMENT)
                 const codegenNode = {
                     isBlock: true,
                     codegenNode: this.createVnodeCall(tag,null,children)
                 }
-                this.incrementCount(CodegenNodeCall.OPEN_BLOCK)
-                this.incrementCount(CodegenNodeCall.CREATE_ELEMENT_BLOCK)
+                this.incrementCount(CodegenCall.OPEN_BLOCK)
+                this.incrementCount(CodegenCall.CREATE_ELEMENT_BLOCK)
                 this.currentNode.codegenNode = codegenNode
             }
             this.currentNode.codegenNodeCallMap = this.codegenNodeCallMap
@@ -107,7 +107,7 @@ function createTransform(root : any) {
                                 children: [child]
                             }
                         }
-                        currentContainer.children.push("+",next)
+                        currentContainer.children.push(" + ",next)
                         children.splice(j,1)
                         j--
                     }
@@ -145,10 +145,10 @@ function createTransform(root : any) {
                 }
                 propsExpression = properties.length > 0 ? this.createObjectExpression(properties) : null
             }
-            this.currentNode.codegenNode = this.createVnodeCall(vnodeTag,propsExpression,children)
+            this.currentNode.codegenNode = this.createVnodeCall(vnodeTag,propsExpression,children.length === 1 ? children[0] : children)
         },
         transformExpression() {
-            this.incrementCount(CodegenNodeCall.TO_DISPLAY_STRING)
+            this.incrementCount(CodegenCall.TO_DISPLAY_STRING)
             this.currentNode.content.express = `__ctx__.${this.currentNode.content.express}`
         },
         traverse() {
