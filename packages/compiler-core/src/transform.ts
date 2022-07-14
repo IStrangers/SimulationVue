@@ -10,20 +10,20 @@ function isTextNode(node : Vnode) {
 function createTransform(root : any) {
     return {
         currentNode: root,
-        codegenNodeCallMap: new Map(),
+        codegenCallMap: new Map(),
         incrementCount(name : any) {
-            const count = this.codegenNodeCallMap.get(name) || 0
-            this.codegenNodeCallMap.set(name,count + 1)
+            const count = this.codegenCallMap.get(name) || 0
+            this.codegenCallMap.set(name,count + 1)
             return name
         },
         reduceCount(name : any) {
-            let count = this.codegenNodeCallMap.get(name)
+            let count = this.codegenCallMap.get(name)
             if(count) {
                 count -= 1
                 if(count > 0) {
-                    this.codegenNodeCallMap.set(name,count)
+                    this.codegenCallMap.set(name,count)
                 } else {
-                    this.codegenNodeCallMap.delete(name)
+                    this.codegenCallMap.delete(name)
                 }
             }
             return name
@@ -80,7 +80,7 @@ function createTransform(root : any) {
                 this.incrementCount(CodegenCall.CREATE_ELEMENT_BLOCK)
                 this.currentNode.codegenNode = codegenNode
             }
-            this.currentNode.codegenNodeCallMap = this.codegenNodeCallMap
+            this.currentNode.codegenCallMap = this.codegenCallMap
         },
         transformElement() {
             const { 

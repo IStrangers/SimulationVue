@@ -175,17 +175,17 @@ function createCodegen(root : any) {
         },
         genCode() {
             const {
-                CodegenCallMap
+                codegenCallMap
             } = root
-            if(CodegenCallMap && CodegenCallMap.size > 0) {
-                const CodegenCalls = [...CodegenCallMap.keys()].join(`,`)
-                this.addCode(`const { ${CodegenCalls} } from SimulationVue`)
+            if(codegenCallMap && codegenCallMap.size > 0) {
+                const codegenCalls = [...codegenCallMap.keys()].join(`,`)
+                this.addCode(`const { ${codegenCalls} } from SimulationVue`)
                 this.newLine()
                 this.newLine()
             }
             this.addCode(`export `)
             const functionName = `render`
-            const args = [`__ctx__`,`__cache__`,`__props__`]
+            const args = [`__ctx__`,`__cache__`,`$props`,`$setup`,`$data`,`$options`]
             this.addCode(`function ${functionName}(${args.join(`,`)}) {`)
             this.indent()
             this.addCode(`return `)
