@@ -52,6 +52,17 @@ function createTransform(root : any) {
                 children,
             }
         },
+        createElementBlockCall(tag : string,props : any,children : Array<any>) {
+            const call = this.incrementCount(CodegenCall.CREATE_ELEMENT_BLOCK)
+            return {
+                type: NodeTypes.VNODE_CALL,
+                call,
+                tag,
+                props,
+                children,
+                isBlock: true,
+            }
+        },
         transformRoot() {
             const { 
                 children
@@ -59,26 +70,19 @@ function createTransform(root : any) {
             if(!children || children.length <= 0) {
                 return
             }
+            this.incrementCount(CodegenCall.OPEN_BLOCK)
             if(children.length === 1) {
                 const child = children[0]
                 if(child.type === NodeTypes.ELEMENT && child.codegenNode) {
-                    this.currentNode.codegenNode = child.codegenNode
                     this.reduceCount(CodegenCall.CREATE_ELEMENT_VNODE)
-                    this.incrementCount(CodegenCall.OPEN_BLOCK)
-                    this.incrementCount(CodegenCall.CREATE_ELEMENT_BLOCK)
-                    this.currentNode.codegenNode.isBlock = true
+                    const { tag,props,children } = child.codegenNode
+                    this.currentNode.codegenNode = this.createElementBlockCall(tag,props,children)
                 } else {
                     this.currentNode.codegenNode = child
                 }
             } else {
                 const tag = this.incrementCount(CodegenCall.FRAGMENT)
-                const codegenNode = {
-                    isBlock: true,
-                    codegenNode: this.createVnodeCall(tag,null,children)
-                }
-                this.incrementCount(CodegenCall.OPEN_BLOCK)
-                this.incrementCount(CodegenCall.CREATE_ELEMENT_BLOCK)
-                this.currentNode.codegenNode = codegenNode
+                this.currentNode.codegenNode = this.createElementBlockCall(tag,null,children)
             }
             this.currentNode.codegenCallMap = this.codegenCallMap
         },
@@ -112,7 +116,8 @@ function createTransform(root : any) {
                         j--
                     }
                 }
-
+            }
+            if(children && children.length > 1) {
                 for(let i = 0; i < children.length; i++) {
                     const child = children[i]
                     const callArgs = []
@@ -149,7 +154,10 @@ function createTransform(root : any) {
         },
         transformExpression() {
             this.incrementCount(CodegenCall.TO_DISPLAY_STRING)
-            this.currentNode.content.express = `__ctx__.${this.currentNode.content.express}`
+            const express = this.currentNode.content.express
+            if(express) {
+                this.currentNode.content.express = `__ctx__.${express}`
+            }
         },
         traverse() {
             const copyCurrentNode = this.currentNode

@@ -4,7 +4,7 @@ const enum CodegenCall {
   CREATE_ELEMENT_VNODE = "createElementVnode",
   CREATE_ELEMENT_BLOCK = "createElementBlock",
   OPEN_BLOCK = "openBlock",
-  FRAGMENT = "fragment",
+  FRAGMENT = "Fragment",
 }
 
 export {

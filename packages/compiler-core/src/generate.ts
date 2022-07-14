@@ -113,8 +113,8 @@ function createCodegen(root : any) {
         genTextCallCode(codegenNode : any) {
             this.genNodeCode(codegenNode.codegenNode)
         },
-        genJsCallCode(codegenNode : any) {
-            const { type,call,args } = codegenNode
+        genCallExpressionCode(codegenNode : any) {
+            const { call,args } = codegenNode
             this.addCode(`${call}(`)
             this.genNodeList(args)
             this.addCode(`)`)
@@ -125,7 +125,7 @@ function createCodegen(root : any) {
                 return
             }
             for (let i = 0; i < children.length; i++) {
-                const child = children![i]
+                const child = children[i]
                 if (isString(child)) {
                     this.addCode(child)
                 } else {
@@ -158,7 +158,7 @@ function createCodegen(root : any) {
                     this.genVnodeCallCode(codegenNode)
                     break
                 case NodeTypes.JS_CALL_EXPRESSION:
-                    this.genJsCallCode(codegenNode)
+                    this.genCallExpressionCode(codegenNode)
                     break
                 case NodeTypes.JS_OBJECT_EXPRESSION:
                     this.genObjectExpression(codegenNode)
