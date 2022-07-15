@@ -38,7 +38,9 @@ function createCodegen(root : any) {
             isBlock && this.addCode(`(${CodegenCall.OPEN_BLOCK}(),`)
             this.addCode(`${call}(`)
             const args = [tag,props]
-            children && children.length > 0 && args.push(children)
+            if((isArray(children) && children.length > 0 ) || children) {
+                args.push(children)
+            }
             this.genNodeList(this.genNullableArgs(args))
             this.addCode(`)`)
             isBlock && this.addCode(`)`)
