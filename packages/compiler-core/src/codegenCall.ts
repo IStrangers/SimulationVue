@@ -1,6 +1,7 @@
 const enum CodegenCall {
   TO_DISPLAY_STRING = "toDisplayString",
   CREATE_TEXT_VNODE = "createTextVnode",
+  CREATE_COMMENT_VNODE = "createCommentVnode",
   CREATE_ELEMENT_VNODE = "createElementVnode",
   CREATE_ELEMENT_BLOCK = "createElementBlock",
   OPEN_BLOCK = "openBlock",

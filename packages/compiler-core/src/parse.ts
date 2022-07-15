@@ -260,12 +260,12 @@ function createParser(template : string) : Parser{
 
       const endIndex = this.source.indexOf(commentEnd)
       const preContent = this.parseTextData(endIndex)
-      const express = preContent.trim()
-      const startOffset = preContent.indexOf(express)
+      const content = preContent.trim()
+      const startOffset = preContent.indexOf(content)
       if(startOffset > 0) {
         this.advancePositionWithMutation(innerStartCursor,preContent,startOffset)
       }
-      const endOffset = startOffset + express.length
+      const endOffset = startOffset + content.length
       this.advancePositionWithMutation(innerEndCursor,preContent,endOffset)
 
       this.advanceBy(commentEnd.length)
@@ -273,8 +273,8 @@ function createParser(template : string) : Parser{
         parent,
         type: NodeTypes.COMMENT,
         content : {
-          type: NodeTypes.COMMENT,
-          express,
+          type: NodeTypes.TEXT,
+          content,
           location: this.getSelection(innerStartCursor,innerEndCursor)
         },
         location: this.getSelection(startCursor)

@@ -1,4 +1,5 @@
 import { Vnode } from "../../runtime-core"
+import { isArray, toUppercaseStart } from "../../shared"
 import { PatchFlags } from "../../shared/src/patchFlags"
 import { NodeTypes } from "./ast"
 import { CodegenCall } from "./codegenCall"
@@ -141,7 +142,18 @@ function createTransform(root : any) {
             let propsExpression = null;
             if(props) {
                 for(let i = 0; i < props.length; i++) {
-                    const { type,isNoAttributeValue,name,value } = props[i]
+                    let { type,isNoAttributeValue,name,value } = props[i]
+                    if(type === NodeTypes.DIRECTIVE) {
+                        const isEvent = name.startsWith(`@`)
+                        const isAttr = name.startsWith(`:`)
+                        if(isEvent || isAttr) {
+                            name = name.slice(1)
+                            name = `${isEvent ? `on${toUppercaseStart(name)}` : name}`
+                            value.content = `__ctx__.${value.content}`
+                        } else if(name.startsWith(`v-`)) {
+
+                        }
+                    }
                     properties.push({
                         type,
                         key: name,
@@ -158,6 +170,9 @@ function createTransform(root : any) {
             if(express) {
                 this.currentNode.content.express = `__ctx__.${express}`
             }
+        },
+        transformComment() {
+            this.incrementCount(CodegenCall.CREATE_COMMENT_VNODE)
         },
         traverse() {
             const copyCurrentNode = this.currentNode
@@ -178,6 +193,9 @@ function createTransform(root : any) {
                     break
                 case NodeTypes.INTERPOLATION:
                     this.transformExpression()
+                    break
+                case NodeTypes.COMMENT:
+                    this.transformComment()
                     break
             }
         }

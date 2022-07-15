@@ -105,6 +105,11 @@ function createCodegen(root : any) {
         genTextCode(codegenNode : any) {
             this.addCode(JSON.stringify(codegenNode.content))
         },
+        genCommentCode(codegenNode : any) {
+            this.addCode(`${CodegenCall.CREATE_COMMENT_VNODE}(`)
+            this.genNodeCode(codegenNode.content)
+            this.addCode(`)`)
+        },
         genInterpolationCode(codegenNode : any) {
             this.addCode(`${CodegenCall.TO_DISPLAY_STRING}(`)
             this.genNodeCode(codegenNode.content)
@@ -144,6 +149,9 @@ function createCodegen(root : any) {
                     break
                 case NodeTypes.TEXT:
                     this.genTextCode(codegenNode)
+                    break
+                case NodeTypes.COMMENT:
+                    this.genCommentCode(codegenNode)
                     break
                 case NodeTypes.SIMPLE_EXPRESSION:
                     this.genExpressionCode(codegenNode)
