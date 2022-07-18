@@ -151,7 +151,22 @@ function createTransform(root : any) {
                             name = `${isEvent ? `on${toUppercaseStart(name)}` : name}`
                             value.content = `__ctx__.${value.content}`
                         } else if(name.startsWith(`v-`)) {
-
+                            const command = name.slice(2)
+                            switch(command) {
+                                case `for`:
+                                    break
+                                case `if`:
+                                case `else-if`:
+                                    break
+                                case `else`:
+                                    break
+                                case `show`:
+                                    break
+                                case `html`:
+                                    break
+                                case `text`:
+                                    break
+                            }
                         }
                     }
                     properties.push({

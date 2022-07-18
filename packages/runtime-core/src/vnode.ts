@@ -1,4 +1,4 @@
-import { isArray, isObject, isString, ShapeFlags } from "../../shared"
+import { isArray, isNumber, isObject, isString, ShapeFlags } from "../../shared"
 import { PatchFlags } from "../../shared/src/patchFlags"
 
 const enum VnodeTagAttr {
@@ -91,6 +91,29 @@ function toDisplayString(val : any) {
            String(val)
 }
 
+function renderList(source : number | string | object | Array<any>,renderHandling : Function) : Array<any> {
+    const nodes : Array<any> = []
+    if(isArray(source) || isString(source)) {
+        const data = source as any
+        for(let i = 0; i < data.length; i++) {
+        nodes.push(renderHandling(data[i],i))
+        }
+    } else if(isObject(source)) {
+        const data = source as object
+        const dataKeys = Object.keys(data)
+        for(let i = 0; i < dataKeys.length; i++) {
+        const key = dataKeys[i]
+        nodes.push(renderHandling(data[key],key))
+        }
+    } else if(isNumber(source)) {
+        const data = source as number
+        for(let i = 0; i < data; i++) {
+        nodes.push(renderHandling(i))
+        }
+    }
+    return nodes
+}
+
 export {
     Vnode,
     VnodeTagAttr,
@@ -103,4 +126,5 @@ export {
     createElementBlock,
     createVnode as createElementVnode,
     toDisplayString,
+    renderList,
 }
