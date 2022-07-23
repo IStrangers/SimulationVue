@@ -368,7 +368,19 @@ function createRenderer(renderOptions : any) {
 
 
 
-  function unmount(vnode : Vnode) {
+  function unmount(vnode : Vnode | null) {
+    if(!vnode) {
+      return
+    }
+    const { type,shapeFlag,children } = vnode
+    if(type === Fragment) {
+      unmountChildren(children)
+      return
+    } else if(shapeFlag & ShapeFlags.COMPONENT) {
+      const component : ComponentInstance = vnode[VnodeTagAttr.COMPONENT]
+      unmount(component.subTree)
+      return
+    }
     hostRemove(vnode.el)
   }
 

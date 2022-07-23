@@ -16,3 +16,4 @@ export * from "./src/apiInject"
 
 export * from "./src/components/Teleport"
 
+export * from "./src/asyncComponent"
