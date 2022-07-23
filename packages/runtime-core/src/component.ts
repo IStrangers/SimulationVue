@@ -12,6 +12,8 @@ function getCurrentComponentInstance() : ComponentInstance | null {
 
 
 interface ComponentInstance {
+    parent: ComponentInstance | null
+    provides: object
     propsOptions : object
     props: object
     attrs: object
@@ -27,7 +29,7 @@ interface ComponentInstance {
     proxy: object
 }
 
-function createComponentInstance(vnode : Vnode) : ComponentInstance {
+function createComponentInstance(vnode : Vnode,parent : ComponentInstance | null) : ComponentInstance {
     const {
         props:propsOptions = {},
         data = () => ({}),
@@ -36,6 +38,8 @@ function createComponentInstance(vnode : Vnode) : ComponentInstance {
     } = vnode.type
     
     const instance = {
+        parent,
+        provides: parent ? parent.provides : Object.create(null),
         propsOptions,
         props: {},
         attrs: {},

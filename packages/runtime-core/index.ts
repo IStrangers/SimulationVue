@@ -16,5 +16,5 @@ export {
   h
 } from "./src/h"
 
-export * from "./src/lifecycle"
+export * from "./src/apiInject"
 

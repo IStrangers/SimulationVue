@@ -26,9 +26,9 @@ function createRenderer(renderOptions : any) {
 
 
 
-  function mountChildren(children : Array<Vnode>,container : Node) {
+  function mountChildren(children : Array<Vnode>,container : Node,parentComponent : ComponentInstance | null) {
     for(let i = 0; i < children.length; i++) {
-      mountELement(children[i],container,null)
+      mountELement(children[i],container,null,parentComponent)
     }
   }
 
@@ -40,7 +40,7 @@ function createRenderer(renderOptions : any) {
 
 
 
-  function mountELement(vnode : Vnode,container : Node,anchor : Node | null) {
+  function mountELement(vnode : Vnode,container : Node,anchor : Node | null,parentComponent : ComponentInstance | null) {
     const {type,props,shapeFlag,children} = vnode
     const isNotParentNode = isSymbolType(type)
     let el = isNotParentNode ? container : hostCreateElement(type)
@@ -50,7 +50,7 @@ function createRenderer(renderOptions : any) {
     if(shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       hostInsert(hostCreateText(children),el)
     }else if(shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-      mountChildren(children,el)
+      mountChildren(children,el,parentComponent)
     }
     if(isNotParentNode === false) {
       hostInsert(el,container,anchor)
@@ -61,7 +61,7 @@ function createRenderer(renderOptions : any) {
   
 
 
-  function patchKeyChildren(oldChildren : Array<Vnode>,newChildren : Array<Vnode>,el : Node) {
+  function patchKeyChildren(oldChildren : Array<Vnode>,newChildren : Array<Vnode>,el : Node,parentComponent : ComponentInstance | null) {
     let i = 0
     let oldLength = oldChildren.length - 1
     let newLength = newChildren.length - 1
@@ -70,7 +70,7 @@ function createRenderer(renderOptions : any) {
       const oldVnode = oldChildren[i]
       const newVnode = newChildren[i]
       if(isSameVnode(oldVnode,newVnode)) {
-        patch(oldVnode,newVnode,el,null)
+        patch(oldVnode,newVnode,el,null,parentComponent)
       } else {
         break
       }
@@ -81,7 +81,7 @@ function createRenderer(renderOptions : any) {
       const oldVnode = oldChildren[oldLength]
       const newVnode = newChildren[newLength]
       if(isSameVnode(oldVnode,newVnode)) {
-        patch(oldVnode,newVnode,el,null)
+        patch(oldVnode,newVnode,el,null,parentComponent)
       } else {
         break
       }
@@ -93,7 +93,7 @@ function createRenderer(renderOptions : any) {
       while(i <= newLength) {
         const nextNewIndex = newLength + 1
         const anchor = nextNewIndex < newChildren.length ? newChildren[nextNewIndex].el : null
-        patch(null,newChildren[i],el,anchor)
+        patch(null,newChildren[i],el,anchor,parentComponent)
         i++
       }
     } else if(i > newLength) {
@@ -118,7 +118,7 @@ function createRenderer(renderOptions : any) {
       const oldVnode = oldChildren[j]
       const newIndex = keyTonewIndexMap.get(oldVnode.key)
       if(newIndex) {
-        patch(oldVnode,newChildren[newIndex],el,null)
+        patch(oldVnode,newChildren[newIndex],el,null,parentComponent)
         //标记
         hasItBeenComparedMap[newIndex - i] = j + 1
       } else {
@@ -137,7 +137,7 @@ function createRenderer(renderOptions : any) {
       
       //是否是创建的元素
       if(hasItBeenComparedMap[j] === 0) {
-        patch(null,current,el,anchor)
+        patch(null,current,el,anchor,parentComponent)
       } else {
         if(j != increment[incrementIndex]) {
           //移动位置
@@ -151,7 +151,7 @@ function createRenderer(renderOptions : any) {
 
 
 
-  function patchChildren(oldVnode : Vnode,newVnode : Vnode,el : Node) {
+  function patchChildren(oldVnode : Vnode,newVnode : Vnode,el : Node,parentComponent : ComponentInstance | null) {
     const oldChildren = oldVnode.children
     const newChildren = newVnode.children
 
@@ -172,7 +172,7 @@ function createRenderer(renderOptions : any) {
       if(oldShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
         //如果新的是数组
         if(newShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-          patchKeyChildren(oldChildren,newChildren,el)
+          patchKeyChildren(oldChildren,newChildren,el,parentComponent)
         } else {
           unmountChildren(oldChildren)
         }
@@ -183,7 +183,7 @@ function createRenderer(renderOptions : any) {
         }
         //如果新的是数组
         if(newShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-          mountChildren(newChildren,el)
+          mountChildren(newChildren,el,parentComponent)
         }
       }
     }
@@ -191,17 +191,17 @@ function createRenderer(renderOptions : any) {
 
 
 
-  function patchDynamicChildren(oldDynamicChildren : Array<Vnode>,newDynamicChildren : Array<Vnode>) {
+  function patchDynamicChildren(oldDynamicChildren : Array<Vnode>,newDynamicChildren : Array<Vnode>,parentComponent : ComponentInstance | null) {
     if(oldDynamicChildren && newDynamicChildren) {
       for(let i = 0; i < newDynamicChildren.length; i++) {
-        patchElement(oldDynamicChildren[i],newDynamicChildren[i])
+        patchElement(oldDynamicChildren[i],newDynamicChildren[i],parentComponent)
       }
     }
   }
 
 
 
-  function patchElement(oldVnode : Vnode,newVnode : Vnode) {
+  function patchElement(oldVnode : Vnode,newVnode : Vnode,parentComponent : ComponentInstance | null) {
     if(!oldVnode.el) {
       return
     }
@@ -218,19 +218,19 @@ function createRenderer(renderOptions : any) {
     }
 
     if(oldVnode.dynamicChildren && newVnode.dynamicChildren) {
-      patchDynamicChildren(oldVnode.dynamicChildren,newVnode.dynamicChildren)
+      patchDynamicChildren(oldVnode.dynamicChildren,newVnode.dynamicChildren,parentComponent)
     } else {
-      patchChildren(oldVnode,newVnode,el)
+      patchChildren(oldVnode,newVnode,el,parentComponent)
     }
   }
 
 
 
-  function processElement(__vnode__ : Vnode | null,vnode : Vnode,container : Node,anchor : Node | null) {
+  function processElement(__vnode__ : Vnode | null,vnode : Vnode,container : Node,anchor : Node | null,parentComponent : ComponentInstance | null) {
     if(__vnode__) {
-      patchElement(__vnode__,vnode)
+      patchElement(__vnode__,vnode,parentComponent)
     } else {
-      mountELement(vnode,container,anchor)
+      mountELement(vnode,container,anchor,parentComponent)
     }
   }
 
@@ -244,8 +244,8 @@ function createRenderer(renderOptions : any) {
 
 
 
-  function mountComponent(vnode : Vnode,container : Node,anchor : Node | null) {
-    const component = createComponentInstance(vnode)
+  function mountComponent(vnode : Vnode,container : Node,anchor : Node | null,parentComponent : ComponentInstance | null) {
+    const component = createComponentInstance(vnode,parentComponent)
     const {render,proxy} = component
     const componentUpdate = () => {
       if(component.isMounted) {
@@ -260,7 +260,7 @@ function createRenderer(renderOptions : any) {
         beforeUpdate && invokeFunctions(beforeUpdate)
 
         const subTree = render.call(proxy,proxy)
-        patch(component.subTree,subTree,container,anchor)
+        patch(component.subTree,subTree,container,anchor,component)
         component.subTree = subTree
 
         updated && invokeFunctions(updated)
@@ -271,7 +271,7 @@ function createRenderer(renderOptions : any) {
         beforeMount && invokeFunctions(beforeMount)
 
         const subTree = render.call(proxy,proxy)
-        patch(null,subTree,container,anchor)
+        patch(null,subTree,container,anchor,component)
         component.subTree = subTree
         component.isMounted = true
 
@@ -311,17 +311,17 @@ function createRenderer(renderOptions : any) {
   }
 
 
-  function processComponent(__vnode__ : Vnode | null,vnode : Vnode,container : Node,anchor : Node | null) {
+  function processComponent(__vnode__ : Vnode | null,vnode : Vnode,container : Node,anchor : Node | null,parentComponent : ComponentInstance | null) {
     if(__vnode__) {
       patchComponent(__vnode__,vnode,anchor)
     } else {
-      mountComponent(vnode,container,anchor)
+      mountComponent(vnode,container,anchor,parentComponent)
     }
   }
 
 
 
-  function patch(__vnode__ : Vnode | null,vnode : Vnode,container : Node,anchor : Node | null) {   
+  function patch(__vnode__ : Vnode | null,vnode : Vnode,container : Node,anchor : Node | null,parentComponent : ComponentInstance | null) {   
     if(__vnode__ === vnode) {
       return
     }
@@ -339,9 +339,9 @@ function createRenderer(renderOptions : any) {
     }
   
     if(vnode.shapeFlag & ShapeFlags.COMPONENT) {
-      processComponent(__vnode__,vnode,container,anchor)
+      processComponent(__vnode__,vnode,container,anchor,parentComponent)
     }else if(vnode.shapeFlag & ShapeFlags.ELEMENT || isSymbolType(vnode.type)) {
-      processElement(__vnode__,vnode,container,anchor)
+      processElement(__vnode__,vnode,container,anchor,parentComponent)
     }
   }
   
@@ -364,7 +364,7 @@ function createRenderer(renderOptions : any) {
   function render(vnode : Vnode | null,container : Node) {
     const __vnode__ = container[ContainerTagAttr.VNODE] || null
     if(vnode) {
-      patch(__vnode__,vnode,container,null)
+      patch(__vnode__,vnode,container,null,null)
       container[ContainerTagAttr.VNODE] = vnode
       container[ContainerTagAttr.IS_ROOT] = true
     } else if(__vnode__){
