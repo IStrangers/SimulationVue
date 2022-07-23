@@ -1,4 +1,4 @@
-import { isArray, isNumber, isObject, isString, ShapeFlags } from "../../shared"
+import { isArray, isFunction, isNumber, isObject, isString, ShapeFlags } from "../../shared"
 import { PatchFlags } from "../../shared/src/patchFlags"
 import { isTeleport } from "./components/Teleport"
 
@@ -35,6 +35,7 @@ function createVnode(type : any,props : any,children : any,patchFlag : PatchFlag
 
     let shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 
                     isTeleport(type) ? ShapeFlags.TELEPORT : 
+                    isFunction(type) ? ShapeFlags.FUNCTIONAL_COMPONENT : 
                     isObject(type) ? ShapeFlags.STATEFUL_COMPONENT : 0
 
     const __isVnode__ = true

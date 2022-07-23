@@ -246,7 +246,6 @@ function createRenderer(renderOptions : any) {
 
   function mountComponent(vnode : Vnode,container : Node,anchor : Node | null,parentComponent : ComponentInstance | null) {
     const component = createComponentInstance(vnode,parentComponent)
-    const {render,proxy} = component
     const componentUpdate = () => {
       if(component.isMounted) {
         const {newVnode} = component
@@ -259,7 +258,7 @@ function createRenderer(renderOptions : any) {
 
         beforeUpdate && invokeFunctions(beforeUpdate)
 
-        const subTree = render.call(proxy,proxy)
+        const subTree = renderComponent(component)
         patch(component.subTree,subTree,container,anchor,component)
         component.subTree = subTree
 
@@ -270,7 +269,7 @@ function createRenderer(renderOptions : any) {
 
         beforeMount && invokeFunctions(beforeMount)
 
-        const subTree = render.call(proxy,proxy)
+        const subTree = renderComponent(component)
         patch(null,subTree,container,anchor,component)
         component.subTree = subTree
         component.isMounted = true
@@ -298,6 +297,18 @@ function createRenderer(renderOptions : any) {
       return true
     }
     return hasPropsChanged(oldProps,newProps)
+  }
+
+
+
+  function renderComponent(instance : ComponentInstance) {
+    const { vnode,render,proxy,props } = instance
+    const { type,shapeFlag } = vnode
+    if(shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+        return render.call(proxy,proxy)
+    } else if(shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT){
+        return type(props)
+    }
   }
 
 

@@ -103,8 +103,12 @@ function initProps(instance : ComponentInstance,rawProps : any) {
         }
     }
 
-    instance.props = reactive(props)
     instance.attrs = attrs
+    if(instance.vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+        instance.props = reactive(props)
+    } else if(instance.vnode.shapeFlag & ShapeFlags.FUNCTIONAL_COMPONENT) {
+        instance.props = attrs
+    }
 }
 
 function hasPropsChanged(oldProps : any = {},newProps : any = {}) : boolean{
