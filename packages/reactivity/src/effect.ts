@@ -1,3 +1,4 @@
+import { recordEffectScope } from "./effectScope"
 
 let activeEffect : ReactiveEffect | null
 
@@ -7,7 +8,7 @@ class ReactiveEffect {
   public deps : Array<Set<ReactiveEffect>> = []
   public active = true
   constructor(public fn : Function,public scheduler : Function | undefined) {
-
+    recordEffectScope(this)
   }
 
   run() {
