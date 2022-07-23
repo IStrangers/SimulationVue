@@ -1,5 +1,6 @@
 import { isArray, isNumber, isObject, isString, ShapeFlags } from "../../shared"
 import { PatchFlags } from "../../shared/src/patchFlags"
+import { isTeleport } from "./components/Teleport"
 
 const enum VnodeTagAttr {
     IS_VNODE = "__isVnode__",
@@ -33,6 +34,7 @@ function isSameVnode(node1 : Vnode,node2 : Vnode) : boolean {
 function createVnode(type : any,props : any,children : any,patchFlag : PatchFlags = 0) : Vnode {
 
     let shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 
+                    isTeleport(type) ? ShapeFlags.TELEPORT : 
                     isObject(type) ? ShapeFlags.STATEFUL_COMPONENT : 0
 
     const __isVnode__ = true

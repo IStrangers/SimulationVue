@@ -337,14 +337,35 @@ function createRenderer(renderOptions : any) {
       }
       __vnode__ = null
     }
-  
-    if(vnode.shapeFlag & ShapeFlags.COMPONENT) {
+    const { type,shapeFlag } = vnode
+    if(shapeFlag & ShapeFlags.COMPONENT) {
       processComponent(__vnode__,vnode,container,anchor,parentComponent)
-    }else if(vnode.shapeFlag & ShapeFlags.ELEMENT || isSymbolType(vnode.type)) {
+    }else if(shapeFlag & ShapeFlags.ELEMENT || isSymbolType(type)) {
       processElement(__vnode__,vnode,container,anchor,parentComponent)
+    } else if(shapeFlag & ShapeFlags.TELEPORT) {
+      type.processTeleport(__vnode__,vnode,container,anchor,{
+        mountChildren,
+        patchChildren,
+        moveElements,
+      })
     }
   }
   
+
+
+  function moveElements(vnodes : Array<Vnode>,container : Node,anchor : Node | null) {
+    for(let vnode of vnodes) {
+      moveElement(vnode,container,anchor)
+    }
+  }
+
+
+
+  function moveElement(vnode : Vnode,container : Node,anchor : Node | null) {
+    const component = vnode[VnodeTagAttr.COMPONENT]
+    hostInsert(component ? component.subTree.el : vnode.el,container,anchor)
+  }
+
 
 
   function unmount(vnode : Vnode) {

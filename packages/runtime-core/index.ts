@@ -8,13 +8,11 @@ export * from "./src/vnode"
 
 export * from "./src/lifecycle"
 
-export {
-  createRenderer
-} from "./src/renderer"
+export * from "./src/renderer"
 
-export {
-  h
-} from "./src/h"
+export * from "./src/h"
 
 export * from "./src/apiInject"
+
+export * from "./src/components/Teleport"
 
