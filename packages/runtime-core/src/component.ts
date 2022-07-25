@@ -85,7 +85,7 @@ function createComponentInstance(renderer : any,container : Node,vnode : Vnode,p
         setCurrentComponentInstance(instance)
         const setupResult = setup(instance.props,setupContext)
         setCurrentComponentInstance(null)
-        if(isFunction(setupContext)) {
+        if(isFunction(setupResult)) {
             instance.render = setupResult
         } else if(isObject(setupResult)) {
             instance.setupState = proxyRefs(setupResult)

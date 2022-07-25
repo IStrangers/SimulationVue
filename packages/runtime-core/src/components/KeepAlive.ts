@@ -14,11 +14,11 @@ class KeepAliveImpl {
     exclude: {}
   }
   cache = new Map()
-  storageContainer = null
+  storageContainer : Node | null = null
   deactivate : Function | undefined = undefined
   activate : Function | undefined = undefined
 
-  setup(props : any,context : any) {
+  setup = (props : any,context : any) => {
     const currentComponentInstance = getCurrentComponentInstance()
     if(!currentComponentInstance) {
       return
@@ -44,10 +44,9 @@ class KeepAliveImpl {
     onUpdated(cacheSubTree)
 
     return () => {
-      debugger
-      const { slots } = context
-      const vnode = slots.default()
-      if(!isVnode(vnode) || vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+      const { slots } = currentComponentInstance
+      const vnode = slots[`default`]()
+      if(!(isVnode(vnode) && vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT)) {
         return vnode
       }
       let { type,key } = vnode
@@ -58,11 +57,12 @@ class KeepAliveImpl {
         vnode.shapeFlag |= ShapeFlags.COMPONENT_KEPT_ALIVE
       } else {
         pendingCacheKey = key
+        vnode.shapeFlag |= ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE
       }
-      vnode.shapeFlag |= ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE
       return vnode
     }
   }
+
 }
 
 function isKeepAlive(obj : object) {
