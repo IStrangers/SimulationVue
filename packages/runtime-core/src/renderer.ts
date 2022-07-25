@@ -346,12 +346,10 @@ function createRenderer(renderOptions : any) {
 
     if(__vnode__ && !isSameVnode(__vnode__,vnode)) {
       const el = __vnode__.el
-      if(el) {
-        if(el[ContainerTagAttr.IS_ROOT]) {
-          hostSetElementText(el,"")
-        } else {
-          unmount(__vnode__)
-        }
+      if(el && el[ContainerTagAttr.IS_ROOT]) {
+        hostSetElementText(el,"")
+      } else {
+        unmount(__vnode__,parentComponent)
       }
       __vnode__ = null
     }

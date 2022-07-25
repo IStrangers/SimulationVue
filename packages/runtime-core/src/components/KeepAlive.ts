@@ -29,12 +29,10 @@ class KeepAliveImpl {
     this.props = props
     this.storageContainer = hostCreateElement(`div`)
     this.deactivate = (vnode : Vnode) => {
-      const component = vnode[VnodeTagAttr.COMPONENT]
-      moveElement(component.subTree.el,this.storageContainer,null)
+      moveElement(vnode,this.storageContainer,null)
     }
     this.activate = (vnode : Vnode,container : Node,anchor : Node | null) => {
-      const component = vnode[VnodeTagAttr.COMPONENT]
-      moveElement(component.subTree.el,container,anchor)
+      moveElement(vnode,container,anchor)
     }
 
     let pendingCacheKey : any = null
