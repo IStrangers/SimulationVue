@@ -79,8 +79,9 @@ class KeepAliveImpl {
         this.keys.delete(key)
         this.keys.add(key)
       } else {
+        this.keys.add(key)
         pendingCacheKey = key
-        if(max && max > this.cache.size) {
+        if(max && max < this.keys.size) {
           pruneCacheEntrt()
         }
       }
