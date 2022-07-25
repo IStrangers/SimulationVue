@@ -15,5 +15,6 @@ export * from "./src/h"
 export * from "./src/apiInject"
 
 export * from "./src/components/Teleport"
+export * from "./src/components//KeepAlive"
 
 export * from "./src/asyncComponent"

@@ -14,6 +14,10 @@ const enum ContainerTagAttr {
 
 function createRenderer(renderOptions : any) {
 
+  const renderer = Object.assign(createRenderApi(renderOptions),{
+    moveElement,
+    moveElements
+  })
   const {
     hostCreateText,
     hostCreateElement,
@@ -22,7 +26,7 @@ function createRenderer(renderOptions : any) {
     hostRemove,
     hostPatchProp,
     hostPatchProps,
-  } = createRenderApi(renderOptions)
+  } = renderer
 
 
 
@@ -240,12 +244,13 @@ function createRenderer(renderOptions : any) {
     component.vnode = newVnode
     component.newVnode = null
     updateProps(component,newVnode.props)
+    component.slots = newVnode.children
   }
 
 
 
   function mountComponent(vnode : Vnode,container : Node,anchor : Node | null,parentComponent : ComponentInstance | null) {
-    const component = createComponentInstance(vnode,parentComponent)
+    const component = createComponentInstance(renderer,container,vnode,parentComponent)
     const componentUpdate = () => {
       if(component.isMounted) {
         const {newVnode} = component
@@ -286,15 +291,15 @@ function createRenderer(renderOptions : any) {
 
 
   function shouldUpdateComponent(oldVnode : Vnode,newVnode : Vnode,) : boolean {
-    const oldProps = oldVnode.props
-    const newProps = newVnode.props
-    if(oldProps === newProps) {
-      return false
-    }
     const oldChildren = oldVnode.children
     const newChildren = newVnode.children
     if(oldChildren || newChildren) {
       return true
+    }
+    const oldProps = oldVnode.props
+    const newProps = newVnode.props
+    if(oldProps === newProps) {
+      return false
     }
     return hasPropsChanged(oldProps,newProps)
   }
@@ -325,6 +330,8 @@ function createRenderer(renderOptions : any) {
   function processComponent(__vnode__ : Vnode | null,vnode : Vnode,container : Node,anchor : Node | null,parentComponent : ComponentInstance | null) {
     if(__vnode__) {
       patchComponent(__vnode__,vnode,anchor)
+    } else if(vnode.shapeFlag & ShapeFlags.COMPONENT_KEPT_ALIVE && parentComponent) {
+      parentComponent.vnode.type.activate(vnode,container,anchor)
     } else {
       mountComponent(vnode,container,anchor,parentComponent)
     }
@@ -379,13 +386,16 @@ function createRenderer(renderOptions : any) {
 
 
 
-  function unmount(vnode : Vnode | null) {
+  function unmount(vnode : Vnode | null,parentComponent : ComponentInstance | null = null) {
     if(!vnode) {
       return
     }
     const { type,shapeFlag,children } = vnode
     if(type === Fragment) {
       unmountChildren(children)
+      return
+    } else if(shapeFlag & ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE && parentComponent) {
+      parentComponent.vnode.type.deactivate(vnode)
       return
     } else if(shapeFlag & ShapeFlags.COMPONENT) {
       const component : ComponentInstance = vnode[VnodeTagAttr.COMPONENT]
