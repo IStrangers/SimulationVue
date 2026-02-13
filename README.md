@@ -2,7 +2,7 @@
 
 # SimulationVue
 
-SimulationVue 是一个基于 TypeScript 实现的轻量级前端框架，参考 Vue.js 3 的核心架构设计，包含了模板编译、响应式系统、虚拟 DOM 和组件渲染等核心功能。
+SimulationVue 是一个学习了Vue3后的一个实现，包含了模板编译、响应式系统、虚拟 DOM 和组件渲染等核心功能。
 
 ## 核心特性
 
